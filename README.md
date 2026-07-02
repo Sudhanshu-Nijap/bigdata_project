@@ -40,6 +40,23 @@ The validation database “twitter_validation.csv” contains 998 lines (Tweets)
 This is the Data Source:
 https://www.kaggle.com/datasets/jp797498e/twitter-entity-sentiment-analysis
 
+### Use a reviewed TweetClaw or X export
+
+The Kafka producer reads `Kafka-PySpark/twitter_validation.csv`, which expects
+four fields: tweet ID, entity, sentiment, and text. To test newer reviewed
+tweet exports without hand-editing the CSV, convert them first:
+
+```bash
+python tools/normalize_tweet_export.py examples/tweetclaw-reviewed-export.csv \
+  --output Kafka-PySpark/twitter_validation.csv
+```
+
+The converter accepts common Twitter/X and TweetClaw CSV headers such as
+`tweet_id`, `account`, `sentiment`, `label`, `text`, `tweet`, `full_text`, and
+`content`. Sentiment values must map to `Negative`, `Positive`, `Neutral`, or
+`Irrelevant`. TweetClaw exports from https://github.com/Xquik-dev/tweetclaw are
+best used after a review step adds one of those sentiment labels.
+
 ## Repository Structure
 
 - **Django-Dashboard** : this folder contains Dashboard Django Application
