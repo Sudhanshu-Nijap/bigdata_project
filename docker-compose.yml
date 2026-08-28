@@ -1,0 +1,81 @@
+services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.3.0
+    container_name: twitter-sentiment-zookeeper
+    ports:
+      - "2181:2181"
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_SERVER_ID: 1
+
+  kafka:
+    image: confluentinc/cp-kafka:7.3.0
+    container_name: twitter-sentiment-kafka
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: INTERNAL://kafka:29092,EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INTERNAL:PLAINTEXT,EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: INTERNAL
+      KAFKA_ZOOKEEPER_CONNECT: "zookeeper:2181"
+      KAFKA_BROKER_ID: 1
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    depends_on:
+      - zookeeper
+
+  mongodb:
+    image: mongo:6.0
+    container_name: twitter-sentiment-mongo
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongodb_data:/data/db
+
+  web:
+    build: .
+    container_name: twitter-sentiment-web
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app
+    environment:
+      - MONGO_URI=${MONGO_URI:-mongodb+srv://sudhanshun10b3720_db_user:vijaysir@cluster0.ygl9qvg.mongodb.net/?appName=Cluster0}
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-bigdata_project}
+      - MONGO_COLLECTION_NAME=${MONGO_COLLECTION_NAME:-tweets}
+    depends_on:
+      - kafka
+
+  spark-consumer:
+    build: .
+    container_name: twitter-sentiment-consumer
+    working_dir: /app/Kafka-PySpark
+    command: ["python", "pyspark_consumer.py"]
+    volumes:
+      - .:/app
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC=numtest
+      - KAFKA_GROUP_ID=sentiment-analysis-group
+      - MONGO_URI=${MONGO_URI:-mongodb+srv://sudhanshun10b3720_db_user:vijaysir@cluster0.ygl9qvg.mongodb.net/?appName=Cluster0}
+      - MONGO_DB_NAME=${MONGO_DB_NAME:-bigdata_project}
+      - MONGO_COLLECTION_NAME=${MONGO_COLLECTION_NAME:-tweets}
+    depends_on:
+      - kafka
+
+  producer:
+    build: .
+    container_name: twitter-sentiment-producer
+    working_dir: /app/Kafka-PySpark
+    command: ["python", "kafka_producer.py"]
+    volumes:
+      - .:/app
+    environment:
+      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
+      - KAFKA_TOPIC=numtest
+      - STREAM_INTERVAL_SECONDS=3.0
+    depends_on:
+      - kafka
+
+volumes:
+  mongodb_data:

@@ -1,0 +1,5 @@
+/* Minimal utility overrides (Main styles are in base.html) */
+.badge-positive { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
+.badge-negative { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
+.badge-neutral { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
+.badge-irrelevant { background-color: #e2d9f3; color: #432874; border: 1px solid #d3c5eb; }

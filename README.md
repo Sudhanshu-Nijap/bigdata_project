@@ -1,4 +1,4 @@
-# Big Data Project: Real-Time Twitter Sentiment Analysis Using Kafka, Spark (MLLib & Streaming), MongoDB and Django.
+# Big Data Project: Real-Time Twitter Sentiment Analysis Using Kafka, Spark (MLLib & Streaming), MongoDB and Flask.
 
 ## Overview
 
@@ -11,8 +11,8 @@ The project is built using the following components:
 - **Apache Kafka**: Used for real-time data ingestion from Twitter DataSet.
 - **Spark Streaming**: Processes the streaming data from Kafka to perform sentiment analysis.
 - **MongoDB**: Stores the processed sentiment data.
-- **Django**: Serves as the web framework for building a real-time dashboard to visualize the sentiment analysis results.
-- **chart.js** & **matplotlib** : for plotting.
+- **Flask**: Lightweight web framework providing a real-time analytics dashboard and ML classifier interface.
+- **chart.js**: For interactive data visualization (pie and bar charts).
 
 - This is the project plan :
    ![project img](imgs/flow.png)
@@ -21,9 +21,9 @@ The project is built using the following components:
 
 - **Real-time Data Ingestion**: Collects live tweets using Kafka from the Twitter DataSet.
 - **Stream Processing**: Utilizes Spark Streaming to process and analyze the data in real-time.
-- **Sentiment Analysis**: Classifies tweets into different sentiment categories (positive, negative, neutral) using natural language processing (NLP) techniques.
+- **Sentiment Analysis**: Classifies tweets into different sentiment categories (positive, negative, neutral, irrelevant) using natural language processing (NLP) and PySpark MLLib.
 - **Data Storage**: Stores the sentiment analysis results in MongoDB for persistence.
-- **Visualization**: Provides a real-time dashboard built with Django to visualize the sentiment trends and insights.
+- **Visualization**: Provides a sleek real-time dashboard built with Flask and Chart.js with live auto-refreshing stats and interactive model classifier.
 
 ## Data description:
 
@@ -59,12 +59,11 @@ best used after a review step adds one of those sentiment labels.
 
 ## Repository Structure
 
-- **Django-Dashboard** : this folder contains Dashboard Django Application
-- **Kafka-PySpark** : this folder contains kafka provider and pyspark streaming (kafka consumer).
-- **ML PySpark Model** : this folder contains the trained model with jupyter notebook and datasets.
-- **zk-single-kafka-single.yml** : Download and install Apache Kafka in docker.
+- **webapp** : Flask dashboard and ML classifier application (`app.py`, templates, static assets).
+- **Kafka-PySpark** : kafka producer and pyspark streaming (kafka consumer).
+- **ML PySpark Model** : trained PySpark model with jupyter notebook and datasets.
+- **docker-compose.yml** : Docker compose configuration for Kafka, Zookeeper, MongoDB, Producer, Spark Consumer, and Web UI.
 - **bigdataproject rapport** : a brief report about the project (in french).
-
 
 ## Getting Started
 
@@ -72,12 +71,12 @@ best used after a review step adds one of those sentiment labels.
 
 To run this project, you will need the following installed on your system:
 
-- Docker (for runing Kafka)
+- Docker (for running Kafka and services)
 - Python 3.x
 - Apache Kafka
 - Apache Spark (PySpark for python)
 - MongoDB
-- Django
+- Flask
 
 ### Installation
 
@@ -89,34 +88,16 @@ To run this project, you will need the following installed on your system:
    
 2. **Installing Docker Desktop**
 
-3. **Set up Kafka**:
-   - Download and install Apache Kafka in docker using :
-   ```bash
-   docker-compose -f zk-single-kafka-single.yml up -d
-   ```
-
-5. **Set up MongoDB**:
-   - Download and install MongoDB.
-     - It is recommended to install also **MongoDBCompass** to visualize data and makes working with mongodb easier.
-
-6. **Install Python dependencies**:
-   - To install pySpark - PyMongo - Django ...
+3. **Install Python dependencies**:
    ```bash
    pip install -r requirements.txt
    ```
 
 ### Running the Project
 
-   Note : you will need MongoDB for Running the Kafka and Spark Streaming application and for Running Django Dashboard application.
-   
-   - **Start MongoDB**:
-      - using command line :
-      ```bash
-      sudo systemctl start mongod
-      ```
-      - then use **MongoDBCompass** (Recommended).
+Note: you will need MongoDB for Running the Kafka and Spark Streaming application and for Running the Web Dashboard application.
 
-#### Running the Kafka and Spark Streaming application :
+#### Running the Kafka and Spark Streaming application:
 
 1. **Change the directory to the application**:
    ```bash
@@ -124,64 +105,45 @@ To run this project, you will need the following installed on your system:
    ```
 
 2. **Start Kafka in docker**:
-   - using command line :
    ```bash
    docker exec -it <kafka-container-id> /bin/bash
    ```
-   - or using docker desktop :
-     
-     ![ docker desktop img](imgs/img5.png)
 
-4. **Run kafka Zookeeper and a Broker**:
+#### Running the Kafka Producer (CSV or Live Scraping):
+
+- **Option A: Stream from Dataset CSV**
+  ```bash
+  python kafka_producer.py --mode csv
+  ```
+
+- **Option B: Scrape Live Tweets & Stream directly to Kafka**
+  ```bash
+  python kafka_producer.py --mode scrape --query "#Bitcoin" --count 50
+  ```
+
+4. **Run pyspark streaming (kafka consumer) app**:
    ```bash
-   kafka-topics --create --topic twitter --bootstrap-server localhost:9092
-   kafka-topics --describe --topic twitter --bootstrap-server localhost:9092
+   python pyspark_consumer.py
    ```
 
-5. **Run kafka provider app**:
+#### Running the Flask Web Dashboard & Scraper Studio:
+
+1. **Run the Flask server**:
    ```bash
-   py producer-validation-tweets.py
+   python webapp/app.py
    ```
+   *(or in production: `gunicorn --bind 0.0.0.0:8000 webapp.app:app`)*
 
-6. **Run pyspark streaming (kafka consumer) app**:
-   ```bash
-   py consumer-pyspark.py
-   ```
+2. **Access the Dashboard & Scraper**:
+   - Live Dashboard: `http://127.0.0.1:8000`
+   - Live Tweet Scraper & Sentiment Studio: `http://127.0.0.1:8000/scrape`
+   - Model Classifier: `http://127.0.0.1:8000/classify`
 
-![Running the Kafka and Spark Streaming application img](imgs/img6.png)
+## Features & Endpoints:
 
-this is an img of the MongoDBCompass after Running the Kafka and Spark Streaming application :
-
-![MongoDBCompass img](imgs/img4.png)
-
-#### Running Django Dashboard application :
-
-1. **Change the directory to the application**:
-   ```bash
-   cd Django-Dashboard
-   ```
-
-2. **Creating static folder**:
-   ```bash
-   python manage.py collectstatic
-   ```
-
-3. **Run the Django server**:
-   ```bash
-   python manage.py runserver
-   ```
-
-4. **Access the Dashboard**:
-   Open your web browser and go to `http://127.0.0.1:8000` to view the real-time sentiment analysis dashboard.
-
-![the Dashboard](imgs/img2.png)
-
-![Running the Dashboard](imgs/img3.png)
-
-## More informations : 
-
-- Django Dashboard get the data from MongoDb DataBase.
-- the User can classify his owne text in `http://127.0.0.1:8000/classify` link.
+- **Live Scrape & Analyze Studio (`/scrape`)**: Search any keyword/hashtag (`#AI`, `Tesla`, `#Crypto`), scrape live tweets, infer sentiment via PySpark ML, and sync results into MongoDB.
+- **Real-Time Live Dashboard (`/`)**: Continuous monitoring of MongoDB stream with 4-quadrant charts, KPI counters, and live search filters.
+- **Interactive Classifier (`/classify`)**: Test custom text against the trained PySpark Logistic Regression model.
 - in the Dashboard, There is a table contains tweets with labels.
 - in the Dashboard, There is 3 statistics or plots : labels rates - pie plot - bar plot.
 
