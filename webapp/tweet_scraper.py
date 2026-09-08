@@ -23,19 +23,40 @@ def clean_scraped_text(text: str) -> str:
     if not text:
         return ""
     t = str(text)
-    # 1. Remove dataset artifact tokens
+    
+    # 1. Strip dataset placeholder tokens
     t = re.sub(r'<\/?unk>|<\/?pad>|\[unk\]|\[pad\]', '', t, flags=re.IGNORECASE)
-    # 2. Remove URLs, web protocols, and shortened domain links
+    
+    # 2. Strip standard and broken spaced URLs
+    t = re.sub(r'https?\s*:\s*/\s*/\s*\S*', '', t, flags=re.IGNORECASE)
     t = re.sub(r'https?://\S+|www\.\S+', '', t)
-    t = re.sub(r'\b[a-zA-Z0-9_\-\.]+\.(com|org|net|io|biz|pro|it|co|me|ly|gl|ai|de|uk|ca)\b[/\S]*', '', t, flags=re.IGNORECASE)
-    # 3. Remove long crypto wallet hashes
-    t = re.sub(r'\b[13][a-km-zA-HJ-NP-Z1-9]{20,40}\b|\b0x[a-fA-F0-9]{20,40}\b', '', t)
-    # 4. Remove broken symbols and punctuation clutter
-    t = re.sub(r'[√•~|►™®©\<\>]', ' ', t)
-    t = re.sub(r'\s*\.\s*/\s*', ' ', t)
-    t = re.sub(r'\[\s*\.\.\.\s*\]|\.{2,}', ' ', t)
-    # 5. Normalize whitespace
+    
+    # 3. Strip URL shorteners, domain fragments & date path URLs
+    t = re.sub(r'\b(dlvr|zla|ift|bit|tinyurl|t|goo)\s*\.\s*(it|biz|tt|ly|co|gl|com|pro|ca|uk)\b[/\w\-\s\.]*', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'\b[a-zA-Z0-9_\-]+\s*\.\s*(com|org|net|io|biz|pro|it|co|uk|de|ca|info|tv)\b(/[^\s]*|\s*/\s*\S+)*', '', t, flags=re.IGNORECASE)
+    t = re.sub(r'/\s*(news|gp|registry|view|articles|watch|video|post|201\d|202\d)\b[/\w\-\s\.]*', '', t, flags=re.IGNORECASE)
+    
+    # 4. Strip crypto wallet addresses and long hex strings
+    t = re.sub(r'\b[13][a-km-zA-HJ-NP-Z1-9]{15,40}\b|\b0x[a-fA-F0-9]{15,40}\b', '', t)
+    
+    # 5. Clean punctuation artifacts, brackets, symbols
+    t = re.sub(r'[√•~|►™®©\<\>\[\]\(\)\{\}\\]', ' ', t)
+    t = re.sub(r'\s*/\s*', ' ', t)
+    t = re.sub(r'\.{2,}', ' ', t)
+    
+    # 6. Normalize quotes
+    t = t.replace('`', "'").replace('“', '"').replace('”', '"')
+    
+    # 7. Deduplicate identical concatenated repeating blocks
+    words = t.split()
+    half = len(words) // 2
+    if half >= 4 and words[:half] == words[half:2*half]:
+        t = ' '.join(words[:half])
+    
+    # 8. Normalize whitespace and trailing punctuation
     t = re.sub(r'\s+', ' ', t).strip()
+    t = re.sub(r'\s+([,\.!\?])', r'\1', t)
+    t = re.sub(r'^[,\.\-\s]+|[,\.\-\s]+$', '', t)
     return t
 
 _CACHED_TWEETS = []
@@ -61,7 +82,7 @@ def _load_tweets_cache():
                         clean_body = clean_scraped_text(raw_text)
 
                         # Filter out empty, too-short, or repetitive promotional spam
-                        if len(clean_body) < 18 or len(clean_body.split()) < 3:
+                        if len(clean_body) < 18 or len(clean_body.split()) < 4:
                             continue
 
                         # Deduplicate near-identical augmented text
@@ -114,13 +135,13 @@ def fetch_from_twitter_v2_api(query: str, count: int = 25) -> list:
             tweets = []
             for item in data.get("data", []):
                 txt = clean_scraped_text(item.get("text", ""))
-                if txt and len(txt) > 10:
+                if txt and len(txt) > 12:
                     author_id = item.get("author_id", "")
                     username = users_map.get(author_id, "twitter_user")
                     date_str = item.get("created_at", "Recently")[:10]
                     tweets.append({
                         "tweet": txt,
-                        "user": f"@{username}",
+                        "user": f"@{username.lstrip('@')}",
                         "date": date_str,
                         "source": "twitter_api_v2"
                     })
@@ -132,17 +153,21 @@ def fetch_from_twitter_v2_api(query: str, count: int = 25) -> list:
     return []
 
 def search_twitter_dataset(query: str, count: int = 25) -> list:
-    """Search and stream authentic real-world Twitter posts from the dataset."""
+    """Search authentic Twitter dataset with exact word boundaries to prevent substring pollution."""
     all_tweets = _load_tweets_cache()
     if not all_tweets:
         return []
 
-    term = query.lstrip("#").lower()
+    term = query.lstrip("#").strip().lower()
+    if not term:
+        return all_tweets[:count]
+
+    # Use regex word boundaries (\bterm\b) so searching 'ai' does not match 'stainless' or 'praise'
+    pattern = re.compile(rf"\b{re.escape(term)}\b", re.IGNORECASE)
     
-    # 1. Match specific topic or tweet text
-    matched = [t for t in all_tweets if term in t["topic"] or term in t["tweet"].lower()]
+    matched = [t for t in all_tweets if pattern.search(t["topic"]) or pattern.search(t["tweet"])]
     
-    # 2. If matched less than requested count, fill with random genuine tweets
+    # If matched less than requested count, append general top tweets
     if len(matched) < count:
         remaining = [t for t in all_tweets if t not in matched]
         random.shuffle(remaining)
@@ -170,8 +195,8 @@ def scrape_live_realtime_feed(query: str, count: int = 25) -> list:
                 pub = it.find("pubDate")
                 if title and title.text:
                     cleaned_txt = clean_scraped_text(title.text)
-                    if len(cleaned_txt) > 12:
-                        handle = f"@{term.lower()}_fan_{random.randint(10, 999)}"
+                    if len(cleaned_txt) > 15:
+                        handle = f"@{term.lower()}_news_{random.randint(10, 999)}"
                         results.append({
                             "tweet": cleaned_txt,
                             "user": handle,
@@ -189,8 +214,8 @@ def scrape_tweets(query: str, count: int = 20) -> list:
     """
     Unified Twitter Scraping Pipeline:
     1. Direct Twitter v2 API (if TWITTER_BEARER_TOKEN is configured)
-    2. Real Twitter Dataset Stream (75,000+ authentic tweets)
-    3. Live Public Web Stream
+    2. Live Public Web Stream (current real-time opinions)
+    3. Authentic Cleaned Twitter Dataset Stream (75,000+ authentic tweets)
     """
     if not query or not query.strip():
         query = "#Tech"
@@ -200,15 +225,17 @@ def scrape_tweets(query: str, count: int = 20) -> list:
     if official:
         return official
 
-    # 2. Authentic Twitter dataset query
-    dataset_tweets = search_twitter_dataset(query, count=count)
-    if dataset_tweets and len(dataset_tweets) >= count:
-        return dataset_tweets[:count]
-
-    # 3. Live Twitter web feed
+    # 2. Live Twitter web feed
     live_tweets = scrape_live_realtime_feed(query, count=count)
-    combined = (dataset_tweets or []) + (live_tweets or [])
+
+    # 3. Authentic Twitter dataset query
+    dataset_tweets = search_twitter_dataset(query, count=count)
+
+    combined = (live_tweets or []) + (dataset_tweets or [])
     if combined:
+        # Keep live tweets at top if available
+        if live_tweets:
+            return (live_tweets + dataset_tweets)[:count]
         random.shuffle(combined)
         return combined[:count]
 
