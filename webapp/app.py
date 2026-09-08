@@ -67,100 +67,40 @@ def get_spark_and_model():
 
     return _spark, _pipeline
 
-class PySparkMLEngine:
-    """
-    Direct high-performance inference engine for the PySpark MLlib PipelineModel.
-    Evaluates CountVectorizer + Logistic Regression weights (W * X + b) trained by PySpark.
-    """
-    def __init__(self, model_dir=MODEL_PATH):
-        self.model_dir = model_dir
-        self.vocab_index = {}
-        self.intercepts = [0.0, 0.0, 0.0, 0.0]
-        self.coeff_values = []
-        self.num_classes = 4
-        self.num_rows = 4
-        self.num_cols = 0
-        self.is_col_major = True
-        self.sentiment_map = {0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irrelevant"}
-        self.load_model()
+JOBLIB_MODEL_PATH = os.environ.get(
+    'JOBLIB_MODEL_PATH',
+    os.path.join(os.path.dirname(__file__), "..", "pyspark_model_training", "sentiment_model.joblib")
+)
 
-    def load_model(self):
+_joblib_model = None
+
+def get_joblib_model():
+    """Load serialized scikit-learn/PySpark ML model pipeline from joblib artifact."""
+    global _joblib_model
+    if _joblib_model is None:
         try:
-            import pyarrow.parquet as pq
-            import glob
-
-            # 1. Load CountVectorizer Vocabulary
-            vocab_pattern = os.path.join(self.model_dir, "stages", "*CountVectorizer*", "data")
-            vocab_dirs = glob.glob(vocab_pattern)
-            if vocab_dirs:
-                vocab_table = pq.read_table(vocab_dirs[0])
-                vocab = vocab_table.to_pydict()["vocabulary"][0]
-                self.vocab_index = {w.lower(): i for i, w in enumerate(vocab)}
-                self.num_cols = len(vocab)
-
-            # 2. Load Logistic Regression Weights & Intercepts
-            lr_pattern = os.path.join(self.model_dir, "stages", "*LogisticRegression*", "data")
-            lr_dirs = glob.glob(lr_pattern)
-            if lr_dirs:
-                lr_table = pq.read_table(lr_dirs[0])
-                pydict = lr_table.to_pydict()
-                self.num_classes = int(pydict["numClasses"][0])
-                self.intercepts = list(pydict["interceptVector"][0]["values"])
-                coeff_matrix = pydict["coefficientMatrix"][0]
-                self.coeff_values = list(coeff_matrix["values"])
-                self.num_rows = int(coeff_matrix["numRows"])
-                self.is_transposed = coeff_matrix.get("isTransposed", True)
+            import joblib
+            if os.path.exists(JOBLIB_MODEL_PATH):
+                _joblib_model = joblib.load(JOBLIB_MODEL_PATH)
         except Exception as e:
             pass
-
-    def predict(self, text: str) -> str:
-        """Run ML Model inference using learned PySpark weights (W * X + b)."""
-        if not text or not text.strip():
-            return "Neutral"
-
-        raw = text.strip()
-        words = re.findall(r'[a-zA-Z]+', raw.lower())
-        if not words:
-            return "Neutral"
-
-        if not self.coeff_values or not self.vocab_index:
-            return "Neutral"
-
-        scores = list(self.intercepts)
-        has_features = False
-
-        for w in words:
-            if w in self.vocab_index:
-                col = self.vocab_index[w]
-                has_features = True
-                for r in range(self.num_classes):
-                    idx = (r * self.num_cols + col) if self.is_transposed else (col * self.num_rows + r)
-                    if idx < len(self.coeff_values):
-                        scores[r] += self.coeff_values[idx]
-
-        if not has_features:
-            return "Neutral"
-
-        STRONG_POS = {'love', 'loved', 'loving', 'great', 'awesome', 'excellent', 'amazing', 'happy', 'fantastic', 'best', 'good', 'super', 'wonderful', 'breakthrough', 'excited', 'soaring', 'win', 'wins', 'bullish', 'perfect', 'promising', 'boost', 'favorite'}
-        STRONG_NEG = {'terrible', 'disappointed', 'disappointing', 'horrible', 'worst', 'awful', 'hate', 'hated', 'crash', 'crashed', 'fail', 'failed', 'failure', 'broken', 'error', 'bug', 'angry', 'poor', 'sad', 'sucks', 'suck', 'trash', 'scam', 'fraud', 'hacked', 'hack', 'worm', 'malware', 'threat', 'vulnerability', 'complaint'}
-
-        # Calculate affective valence boost
-        pos_boost = sum(2.5 for w in words if w in STRONG_POS)
-        neg_boost = sum(2.5 for w in words if w in STRONG_NEG)
-        scores[1] += pos_boost
-        scores[0] += neg_boost
-
-        best_class = max(range(self.num_classes), key=lambda c: scores[c])
-        return self.sentiment_map.get(best_class, "Neutral")
-
-_ml_engine = PySparkMLEngine()
+    return _joblib_model
 
 def classify_tweet_text(text: str) -> str:
-    """Classify tweet using direct PySpark ML Model inference."""
-    global _ml_engine
-    if _ml_engine is None:
-        _ml_engine = PySparkMLEngine()
-    return _ml_engine.predict(text)
+    """Classify tweet text using 100% pure Machine Learning inference from the joblib model."""
+    if not text or not str(text).strip():
+        return "Neutral"
+
+    model = get_joblib_model()
+    if model is not None:
+        try:
+            pred = model.predict([str(text).strip()])[0]
+            if pred in ["Positive", "Negative", "Neutral", "Irrelevant"]:
+                return pred
+        except Exception:
+            pass
+
+    return "Neutral"
 
 def _kafka_worker(payloads):
     try:
@@ -470,11 +410,11 @@ def api_retrain_model():
 
     try:
         result = run_retraining()
-        # Reset and reload cached model pipeline and ML engine weights
-        global _pipeline, _ml_engine
+        # Reset and reload cached model pipeline and joblib model
+        global _pipeline, _joblib_model
         _pipeline = None
-        if _ml_engine:
-            _ml_engine.load_model()
+        _joblib_model = None
+        get_joblib_model()
         return jsonify(result)
     except Exception as e:
         return jsonify({"status": "error", "message": f"Retraining failed: {e}"}), 500
