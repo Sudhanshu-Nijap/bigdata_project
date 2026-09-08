@@ -274,51 +274,58 @@ def scrape_page():
 
 @app.route('/api/stream-tweets')
 def api_stream_tweets():
-    """Server-Sent Events (SSE) real-time streaming endpoint."""
+    """Server-Sent Events (SSE) real-time streaming endpoint: continuous and rapid."""
     query = request.args.get('query', '#AI').strip() or '#AI'
 
     def generate_live_stream():
-        scraped = scrape_tweets(query, count=30)
-        if not scraped:
-            scraped = scrape_tweets("tech", count=15)
-
-        for idx, item in enumerate(scraped):
-            tweet_text = item.get('tweet', '').strip()
-            if not tweet_text:
+        idx = 0
+        while True:
+            scraped = scrape_tweets(query, count=30)
+            if not scraped:
+                scraped = scrape_tweets("tech", count=20)
+            if not scraped:
+                time.sleep(1.0)
                 continue
 
-            prediction = classify_tweet_text(tweet_text)
-            publish_to_kafka([[str(idx + 1), query, "Unlabeled", tweet_text]])
+            for item in scraped:
+                idx += 1
+                tweet_text = item.get('tweet', '').strip()
+                if not tweet_text:
+                    continue
 
-            _, collection = get_mongo_collection()
-            if collection is not None:
-                try:
-                    collection.insert_one({
-                        'tweet': tweet_text,
-                        'prediction': prediction,
-                        'query': query,
-                        'is_verified': False,
-                        'timestamp': time.time()
-                    })
-                except Exception:
-                    pass
+                prediction = classify_tweet_text(tweet_text)
+                publish_to_kafka([[str(idx), query, "Unlabeled", tweet_text]])
 
-            event_data = {
-                'index': idx + 1,
-                'query': query,
-                'tweet': tweet_text,
-                'user': item.get('user', 'twitter_user'),
-                'date': item.get('date', 'Live'),
-                'prediction': prediction,
-                'is_verified': False
-            }
+                _, collection = get_mongo_collection()
+                if collection is not None:
+                    try:
+                        collection.insert_one({
+                            'tweet': tweet_text,
+                            'prediction': prediction,
+                            'query': query,
+                            'is_verified': False,
+                            'timestamp': time.time()
+                        })
+                    except Exception:
+                        pass
 
-            yield f"data: {json.dumps(event_data)}\n\n"
-            time.sleep(2.0)
+                event_data = {
+                    'index': idx,
+                    'query': query,
+                    'tweet': tweet_text,
+                    'user': item.get('user', 'twitter_user'),
+                    'date': item.get('date', 'Live'),
+                    'prediction': prediction,
+                    'is_verified': False
+                }
+
+                yield f"data: {json.dumps(event_data)}\n\n"
+                time.sleep(0.5)
 
     return Response(generate_live_stream(), mimetype='text/event-stream', headers={
         'Cache-Control': 'no-cache',
-        'X-Accel-Buffering': 'no'
+        'X-Accel-Buffering': 'no',
+        'Connection': 'keep-alive'
     })
 
 @app.route('/api/scrape-analyze', methods=['POST'])
