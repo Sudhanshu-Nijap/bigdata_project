@@ -235,43 +235,6 @@ Open your browser and navigate to:
 
 ---
 
-## 💼 Resume Bullet Points & Project Descriptions (Ready to Copy-Paste)
-
-You can tailor and use these high-impact, ATS-optimized descriptions for your **Software Engineer**, **Big Data Engineer**, or **Machine Learning / Data Engineer** resume:
-
-### 🌟 Project Title: Real-Time Big Data Sentiment Analysis & Lakehouse Pipeline
-* **Technologies**: Apache Kafka, Apache Spark (PySpark), Python, Machine Learning (Scikit-Learn, PySpark MLlib), MongoDB Atlas, Apache Parquet / PyArrow, Flask, Docker, Chart.js, Server-Sent Events (SSE), HTML5/CSS3.
-
-#### 📌 Option 1: For Big Data / Data Engineering Resumes
-> - **Architected an end-to-end distributed Big Data pipeline** using **Apache Kafka** and **PySpark Structured Streaming** to ingest, clean, and process real-time social streams across partitioned topics with sub-second latency.
-> - **Designed a dual-tier Data Lakehouse storage architecture** separating **Hot operational storage (MongoDB Atlas)** for live telemetry from **Cold analytical storage (Snappy-compressed Apache Parquet)**, reducing storage footprint by **~82%** and accelerating analytical OLAP scans.
-> - **Engineered an automated retraining pipeline** in PySpark that aggregates historical Parquet archives with human-verified ground truth data to continuously retrain and dynamically hot-reload production NLP models.
-> - **Containerized multi-node services** (Kafka broker, Zookeeper, MongoDB, PySpark consumer, Flask web app) using **Docker & Docker Compose** for reproducible local and cloud deployments.
-
-#### 📌 Option 2: For Machine Learning / AI / NLP Resumes
-> - **Developed an advanced multi-class NLP sentiment classifier** combining **Word N-Grams (1–3) and Character N-Grams (3–5)** with regularized multinomial Logistic Regression, achieving **97.7% validation accuracy** and balanced F1-scores across 4 sentiment classes (`Positive`, `Negative`, `Neutral`, `Irrelevant`).
-> - **Mitigated real-world entity bias** by training on balanced factual and domain-calibrated syntactic patterns, ensuring biographical/factual texts accurately classify as neutral ($>98\%$ confidence).
-> - **Built a Human-in-the-Loop (HITL) Active Learning desk** enabling live annotation feedback, automated ground-truth logging, and one-click distributed model retraining via PySpark.
-> - **Deployed low-latency ML inference** ($<0.2\text{ms}$ per tweet) integrated into an asynchronous Flask web server with real-time Server-Sent Events (SSE) streaming and dynamic Chart.js visualizations.
-
-#### 📌 Option 3: Concise 3-Bullet Summary
-> - **Engineered a real-time Big Data pipeline** using **Kafka, PySpark, and MongoDB Atlas** to ingest and classify social media streams at scale.
-> - **Trained a dual-feature NLP ML model** achieving **97.7% accuracy** across 75k+ tweets with sub-millisecond inference and automated PySpark batch retraining.
-> - **Implemented a Data Lakehouse architecture** utilizing **Snappy-compressed Apache Parquet**, achieving **>80% storage cost reduction** and high-speed columnar analytics.
-
----
-
-## 🎯 Key Interview Questions & Talking Points
-
-| Interview Question | Key Answer / Architectural Decision |
-| :--- | :--- |
-| **Why use Kafka instead of sending tweets directly to MongoDB or Spark?** | Kafka acts as a distributed shock absorber. During traffic surges (e.g., breaking news, sports events), Kafka buffers thousands of tweets in partitioned topics without dropping messages or overloading downstream databases. |
-| **Why combine MongoDB and Apache Parquet (Data Lakehouse)?** | MongoDB is optimized for fast, real-time CRUD operations and live dashboard querying (Hot Tier), but becomes expensive and slow for long-term multi-gigabyte storage. Parquet (Cold Tier) compresses data by $>80\%$ using columnar compression and enables PySpark to scan millions of rows in seconds for retraining. |
-| **How did you achieve 97.7% accuracy without hardcoding rules?** | By engineering a composite feature matrix combining Word N-Grams (for semantic phrases) and Character N-Grams (for subword/typo robustness) with L2-regularized multinomial Logistic Regression trained on over 75,000 domain-balanced samples. |
-| **How does the Active Learning loop work?** | Users can verify or correct sentiment predictions on the dashboard. Verified records are flagged in MongoDB (`is_verified: true`), ingested by `spark_retrainer.py`, and used to retrain and hot-reload the production model without downtime. |
-
----
-
 ## 📄 License & Attribution
 Distributed under the MIT License. Developed as a production-grade Big Data & Applied AI reference architecture.
 
