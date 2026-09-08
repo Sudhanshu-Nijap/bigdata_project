@@ -18,7 +18,26 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 TRAIN_DATASET_PATH = os.path.join(BASE_DIR, "..", "pyspark_model_training", "training_dataset.csv")
 VAL_DATASET_PATH = os.path.join(BASE_DIR, "..", "pyspark_model_training", "validation_dataset.csv")
 
-# Preloaded cache of authentic Twitter posts
+def clean_scraped_text(text: str) -> str:
+    """Thoroughly clean, sanitize, and normalize tweet text."""
+    if not text:
+        return ""
+    t = str(text)
+    # 1. Remove dataset artifact tokens
+    t = re.sub(r'<\/?unk>|<\/?pad>|\[unk\]|\[pad\]', '', t, flags=re.IGNORECASE)
+    # 2. Remove URLs, web protocols, and shortened domain links
+    t = re.sub(r'https?://\S+|www\.\S+', '', t)
+    t = re.sub(r'\b[a-zA-Z0-9_\-\.]+\.(com|org|net|io|biz|pro|it|co|me|ly|gl|ai|de|uk|ca)\b[/\S]*', '', t, flags=re.IGNORECASE)
+    # 3. Remove long crypto wallet hashes
+    t = re.sub(r'\b[13][a-km-zA-HJ-NP-Z1-9]{20,40}\b|\b0x[a-fA-F0-9]{20,40}\b', '', t)
+    # 4. Remove broken symbols and punctuation clutter
+    t = re.sub(r'[√•~|►™®©\<\>]', ' ', t)
+    t = re.sub(r'\s*\.\s*/\s*', ' ', t)
+    t = re.sub(r'\[\s*\.\.\.\s*\]|\.{2,}', ' ', t)
+    # 5. Normalize whitespace
+    t = re.sub(r'\s+', ' ', t).strip()
+    return t
+
 _CACHED_TWEETS = []
 
 def _load_tweets_cache():
@@ -27,6 +46,8 @@ def _load_tweets_cache():
         return _CACHED_TWEETS
 
     loaded = []
+    seen_texts = set()
+
     for path in [VAL_DATASET_PATH, TRAIN_DATASET_PATH]:
         if not os.path.exists(path):
             continue
@@ -36,20 +57,26 @@ def _load_tweets_cache():
                 for row in reader:
                     if len(row) >= 4:
                         topic_tag = row[1].strip()
-                        tweet_text = row[3].strip()
-                        if len(tweet_text) < 15:
+                        raw_text = row[3].strip()
+                        clean_body = clean_scraped_text(raw_text)
+
+                        # Filter out empty, too-short, or repetitive promotional spam
+                        if len(clean_body) < 18 or len(clean_body.split()) < 3:
                             continue
-                        
-                        # Extract author handle if available in tweet text, else realistic handle
-                        handle_match = re.search(r"@([a-zA-Z0-9_]{3,15})", tweet_text)
+
+                        # Deduplicate near-identical augmented text
+                        norm_key = re.sub(r'[^a-zA-Z0-9]', '', clean_body.lower())[:60]
+                        if norm_key in seen_texts:
+                            continue
+                        seen_texts.add(norm_key)
+
+                        # Extract author handle if present in text, else generate clean tag handle
+                        handle_match = re.search(r"@([a-zA-Z0-9_]{3,15})", raw_text)
                         if handle_match:
-                            user_handle = f"@{handle_match.group(1)}"
+                            user_handle = f"@{handle_match.group(1).lstrip('@')}"
                         else:
                             clean_tag = re.sub(r"[^a-zA-Z0-9]", "", topic_tag).lower()
                             user_handle = f"@{clean_tag}_{random.randint(10, 999)}"
-
-                        clean_body = re.sub(r"https?://\S+|www\.\S+", "", tweet_text)
-                        clean_body = re.sub(r"\s+", " ", clean_body).strip()
 
                         loaded.append({
                             "tweet": clean_body,
@@ -63,14 +90,6 @@ def _load_tweets_cache():
 
     _CACHED_TWEETS = loaded
     return _CACHED_TWEETS
-
-def clean_scraped_text(text: str) -> str:
-    """Clean and normalize tweet text."""
-    if not text:
-        return ""
-    text = re.sub(r"https?://\S+|www\.\S+", "", str(text))
-    text = re.sub(r"\s+", " ", text)
-    return text.strip()
 
 def fetch_from_twitter_v2_api(query: str, count: int = 25) -> list:
     """Fetch tweets from official Twitter/X API v2 if TWITTER_BEARER_TOKEN is configured."""

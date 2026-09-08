@@ -380,11 +380,12 @@ function renderFilteredTable() {
         const badgeClass = getBadgeClass(pred);
         const originalIndex = allTweetsData.indexOf(item);
 
+        const cleanUser = (item.user || 'twitter_user').replace(/^@+/, '');
         return `
             <tr>
                 <td class="text-muted fw-bold">${idx + 1}</td>
                 <td>
-                    <div class="fw-semibold">@${escapeHtml(item.user || 'user')}</div>
+                    <div class="fw-semibold">@${escapeHtml(cleanUser)}</div>
                     <small class="text-muted" style="font-size: 0.75rem;">${escapeHtml(item.date || 'Live')}</small>
                 </td>
                 <td>
