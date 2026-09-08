@@ -1,6 +1,6 @@
 {% extends 'base.html' %}
 
-{% block title %}In-Depth Big Data Architecture Guide - Real-Time Twitter Sentiment Analysis{% endblock %}
+{% block title %}In-Depth Big Data Architecture Guide - Twitter Sentiment Analysis{% endblock %}
 
 {% block head %}
 <style>
@@ -23,42 +23,69 @@
         box-shadow: 0 10px 20px rgba(0,0,0,0.06);
     }
     .step-number-circle {
-        width: 38px;
-        height: 38px;
+        width: 42px;
+        height: 42px;
         border-radius: 50%;
         display: flex;
         align-items: center;
         justify-content: center;
-        font-weight: 700;
-        font-size: 1rem;
+        font-weight: 800;
+        font-size: 1.1rem;
         flex-shrink: 0;
     }
     .tech-tag {
-        font-family: monospace;
+        font-family: 'Consolas', 'Courier New', monospace;
         font-size: 0.75rem;
         background: #f1f5f9;
         color: #334155;
-        padding: 2px 8px;
+        padding: 3px 8px;
         border-radius: 4px;
         border: 1px solid #cbd5e1;
+    }
+    .code-pill {
+        font-family: 'Consolas', 'Courier New', monospace;
+        background: #0f172a;
+        color: #38bdf8;
+        padding: 2px 6px;
+        border-radius: 4px;
+        font-size: 0.8rem;
     }
     .metric-box {
         background: #f8fafc;
         border: 1px dashed #cbd5e1;
         border-radius: 8px;
-        padding: 12px;
+        padding: 14px 10px;
         text-align: center;
     }
     .metric-value {
-        font-size: 1.4rem;
+        font-size: 1.5rem;
         font-weight: 800;
         color: #0f172a;
     }
     .metric-label {
-        font-size: 0.75rem;
+        font-size: 0.72rem;
         color: #64748b;
         text-transform: uppercase;
         letter-spacing: 0.05em;
+        font-weight: 600;
+    }
+    .nav-pills .nav-link {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: #475569;
+        border-radius: 8px;
+        padding: 8px 16px;
+    }
+    .nav-pills .nav-link.active {
+        background-color: #0f172a;
+        color: #ffffff;
+    }
+    .diagram-preview-img {
+        max-height: 520px;
+        object-fit: contain;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        background: #ffffff;
     }
 </style>
 {% endblock %}
@@ -71,11 +98,11 @@
         <div class="card shadow-sm border-0 mb-4" style="background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%); color: #ffffff; border-radius: 14px;">
             <div class="card-body p-4 p-md-5 text-center">
                 <span class="badge bg-primary px-3 py-2 mb-3 text-uppercase fw-semibold" style="letter-spacing: 0.05em; font-size: 0.75rem;">
-                    💡 Comprehensive Engineering Whitepaper & Guide
+                    💡 Comprehensive Architecture & Technical Blueprint
                 </span>
                 <h2 class="fw-bold mb-3 display-6">In-Depth Big Data Architecture & Execution Pipeline</h2>
-                <p class="text-light opacity-75 mb-4 mx-auto" style="max-width: 800px; font-size: 1.05rem; line-height: 1.6;">
-                    An end-to-end distributed Big Data ecosystem built for real-time ingestion, micro-batch processing with Apache Spark, pure statistical NLP sentiment inference (97.7% accuracy), and dual-tier Lakehouse persistence.
+                <p class="text-light opacity-75 mb-4 mx-auto" style="max-width: 850px; font-size: 1.05rem; line-height: 1.6;">
+                    A complete, detailed technical breakdown of how live social media opinions are ingested via Apache Kafka, distributed and tokenized in Apache Spark, classified with 97.7% statistical ML accuracy, streamed to a real-time web dashboard, and compacted into a dual-tier Data Lakehouse.
                 </p>
                 <div class="d-flex justify-content-center gap-2 flex-wrap">
                     <span class="tech-tag bg-dark text-light border-secondary">Apache Kafka 3.x</span>
@@ -83,6 +110,7 @@
                     <span class="tech-tag bg-dark text-light border-secondary">MongoDB Atlas (Hot Tier)</span>
                     <span class="tech-tag bg-dark text-light border-secondary">Snappy Parquet (Cold Tier)</span>
                     <span class="tech-tag bg-dark text-light border-secondary">Dual-Feature ML (97.7% Acc)</span>
+                    <span class="tech-tag bg-dark text-light border-secondary">Server-Sent Events (SSE)</span>
                 </div>
             </div>
         </div>
@@ -92,7 +120,7 @@
             <div class="col-6 col-md-3">
                 <div class="metric-box shadow-sm bg-white">
                     <div class="metric-value text-primary">97.70%</div>
-                    <div class="metric-label">ML Validation Accuracy</div>
+                    <div class="metric-label">ML Benchmark Accuracy</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
@@ -104,7 +132,7 @@
             <div class="col-6 col-md-3">
                 <div class="metric-box shadow-sm bg-white">
                     <div class="metric-value text-info">&gt; 80%</div>
-                    <div class="metric-label">Parquet Disk Space Saved</div>
+                    <div class="metric-label">Parquet Storage Savings</div>
                 </div>
             </div>
             <div class="col-6 col-md-3">
@@ -115,11 +143,68 @@
             </div>
         </div>
 
-        <!-- 3. The 4 Big Data Core Pillars In-Depth -->
+        <!-- 3. Interactive Architecture Diagrams Carousel / Tabs -->
+        <div class="card spec-card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1 text-dark">📐 Publication Architecture & Pipeline Diagrams</h4>
+                        <p class="text-muted small mb-0">High-resolution (300 DPI) system diagrams generated directly from the codebase.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="card-body p-4 pt-0">
+                <!-- Nav Tabs -->
+                <ul class="nav nav-pills mb-3 justify-content-center bg-light p-2 rounded-3" id="diagramTabs" role="tablist">
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link active" id="tab-arch-btn" data-bs-toggle="pill" data-bs-target="#tab-arch" type="button" role="tab">
+                            1. End-to-End System Flowchart
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-nlp-btn" data-bs-toggle="pill" data-bs-target="#tab-nlp" type="button" role="tab">
+                            2. PySpark NLP Pipeline
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-lake-btn" data-bs-toggle="pill" data-bs-target="#tab-lake" type="button" role="tab">
+                            3. Dual-Tier Lakehouse Storage
+                        </button>
+                    </li>
+                    <li class="nav-item" role="presentation">
+                        <button class="nav-link" id="tab-active-btn" data-bs-toggle="pill" data-bs-target="#tab-active" type="button" role="tab">
+                            4. Active Learning Loop
+                        </button>
+                    </li>
+                </ul>
+
+                <!-- Tab Content -->
+                <div class="tab-content text-center" id="diagramTabsContent">
+                    <div class="tab-pane fade show active" id="tab-arch" role="tabpanel">
+                        <img src="{{ url_for('static', filename='images/architecture_diagram.png') }}" alt="System Architecture" class="img-fluid diagram-preview-img mb-2 shadow-sm">
+                        <p class="text-muted small"><strong>Fig. 1</strong>: Sequential data flow from live Twitter scraping &rarr; Kafka broker &rarr; PySpark streaming &rarr; Dual-tier storage &rarr; Web dashboard.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab-nlp" role="tabpanel">
+                        <img src="{{ url_for('static', filename='images/spark_nlp_pipeline.png') }}" alt="Spark NLP Pipeline" class="img-fluid diagram-preview-img mb-2 shadow-sm">
+                        <p class="text-muted small"><strong>Fig. 2</strong>: Stage-by-stage feature transformation and tokenization in the PySpark MLlib / Dual-Feature NLP classifier.</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab-lake" role="tabpanel">
+                        <img src="{{ url_for('static', filename='images/lakehouse_tiering.png') }}" alt="Lakehouse Tiering" class="img-fluid diagram-preview-img mb-2 shadow-sm">
+                        <p class="text-muted small"><strong>Fig. 3</strong>: Hot Operational Store (MongoDB Atlas) vs. Cold Analytical Data Lake (Snappy-compressed Apache Parquet).</p>
+                    </div>
+                    <div class="tab-pane fade" id="tab-active" role="tabpanel">
+                        <img src="{{ url_for('static', filename='images/active_learning_flow.png') }}" alt="Active Learning Loop" class="img-fluid diagram-preview-img mb-2 shadow-sm">
+                        <p class="text-muted small"><strong>Fig. 4</strong>: Closed-loop operator feedback, ground-truth persistence, and zero-downtime automated PySpark retraining.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 4. The 4 Big Data Core Pillars In-Depth -->
         <div class="card spec-card shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-0">
                 <h4 class="fw-bold mb-1 text-dark">🏛️ The 4 Big Data Engineering Pillars (Deep Dive)</h4>
-                <p class="text-muted small mb-0">Detailed explanation of why each technology is essential and how it prevents single-server failure modes.</p>
+                <p class="text-muted small mb-0">Detailed breakdown of the architectural roles, parameters, and algorithms used in each component.</p>
             </div>
             <div class="card-body p-4 pt-1">
                 <div class="row g-4">
@@ -131,15 +216,18 @@
                                 <h5 class="fw-bold mb-0 text-dark">1. Apache Kafka</h5>
                                 <span class="arch-badge bg-info text-dark">Ingestion Buffer</span>
                             </div>
-                            <h6 class="text-primary fw-semibold" style="font-size: 0.85rem;">Distributed Message Broker & Shock Absorber</h6>
+                            <h6 class="text-primary fw-semibold" style="font-size: 0.85rem;">Distributed Message Broker & Traffic Shock Absorber</h6>
                             <p class="text-secondary small mb-2">
-                                <strong>Technical Mechanism:</strong> Scraped tweets are pushed into the partitioned Kafka topic <code>twitter_tweets</code> on <code>localhost:9092</code>. Kafka guarantees decoupled producer-consumer architecture, zero message loss, and in-memory disk buffering.
+                                <strong>Technical Mechanism:</strong> Incoming tweets are serialized into UTF-8 JSON payloads and published to the partitioned Kafka topic <span class="code-pill">twitter_tweets</span> at <span class="code-pill">localhost:9092</span>.
                             </p>
                             <p class="text-secondary small mb-2">
-                                <strong>The "Why":</strong> During breaking news or viral events, Twitter traffic spikes to tens of thousands of tweets per second. Kafka buffers these bursts so downstream NLP and database workers consume at a steady, reliable pace without crashing.
+                                <strong>Decoupled Asynchrony:</strong> In the web app, Kafka writes run inside background daemon threads (<span class="code-pill">_kafka_worker</span>). Even under massive streaming surges, the web UI never blocks or slows down.
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                <strong>The "Why":</strong> Protects the system against sudden traffic bursts (breaking news, viral hashtags), preventing socket congestion and downstream database crashes.
                             </p>
                             <div class="p-2 rounded small" style="background: #e0f2fe; color: #0369a1;">
-                                <strong>Code Location:</strong> <code>kafka_spark_streaming/kafka_producer.py</code>
+                                <strong>Source File:</strong> <code>kafka_spark_streaming/kafka_producer.py</code>
                             </div>
                         </div>
                     </div>
@@ -153,13 +241,16 @@
                             </div>
                             <h6 class="text-warning fw-semibold text-dark" style="font-size: 0.85rem;">Structured Streaming & Parallel ML Retraining</h6>
                             <p class="text-secondary small mb-2">
-                                <strong>Technical Mechanism:</strong> PySpark launches a distributed <code>SparkSession</code> using all CPU cores (<code>master("local[*]")</code>). It continuously consumes micro-batches from Kafka using <code>readStream</code>, applies regex cleaning, and performs distributed inference.
+                                <strong>Technical Mechanism:</strong> Initializes a distributed <span class="code-pill">SparkSession</span> utilizing all available CPU cores (<span class="code-pill">master("local[*]")</span>). Ingests micro-batches via <span class="code-pill">readStream</span> every 2 to 5 seconds.
                             </p>
                             <p class="text-secondary small mb-2">
-                                <strong>The "Why":</strong> Standard Python loops are single-threaded (<code>O(N)</code>). PySpark splits huge workloads into parallel partitions across multiple CPU cores, enabling model retraining on millions of archived records in seconds.
+                                <strong>Distributed Tokenization & Vectorization:</strong> Parses JSON schemas, performs regex noise removal, and executes parallel ML scoring across worker threads.
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                <strong>The "Why":</strong> Single-threaded Python loops process records sequentially (<span class="code-pill">O(N)</span>). PySpark scales horizontally across partitions, making retraining on millions of archived records take seconds instead of hours.
                             </p>
                             <div class="p-2 rounded small" style="background: #ffedd5; color: #9a3412;">
-                                <strong>Code Location:</strong> <code>kafka_spark_streaming/spark_consumer.py</code>
+                                <strong>Source File:</strong> <code>kafka_spark_streaming/spark_consumer.py</code>
                             </div>
                         </div>
                     </div>
@@ -173,13 +264,16 @@
                             </div>
                             <h6 class="text-purple fw-semibold" style="font-size: 0.85rem; color: #7c3aed;">Word (1-3) + Char (3-5) N-Grams (97.7% Accuracy)</h6>
                             <p class="text-secondary small mb-2">
-                                <strong>Technical Mechanism:</strong> Combines 45,000 Word N-Grams (for semantic phrases & negations) with 25,000 Character N-Grams (for subwords, typos, and slang) into an $L2$-regularized multinomial Logistic Regression classifier.
+                                <strong>Technical Mechanism:</strong> Combines <strong>45,000 Word N-Grams</strong> (captures semantic phrases & multi-word negations) with <strong>25,000 Character N-Grams</strong> (captures subword morphology, typos, and slang) into an $L2$-regularized multinomial Logistic Regression classifier (<span class="code-pill">C=2.5</span>).
                             </p>
                             <p class="text-secondary small mb-2">
-                                <strong>Entity Bias Calibration:</strong> Purely factual sentences (e.g. <em>"Tesla was founded in 2003"</em>) are statistically learned as <strong>Neutral</strong> (98.9% confidence) instead of biased positive.
+                                <strong>Entity Bias Calibration:</strong> In raw data, entity names (like <em>Tesla</em>) had false positive correlations. By calibrating on balanced factual syntax, biographical/factual sentences classify as <strong>Neutral</strong> (98.9% confidence).
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                <strong>Zero Hardcoding:</strong> 100% statistical ML inference with zero manual keyword dictionary overrides.
                             </p>
                             <div class="p-2 rounded small" style="background: #ede9fe; color: #5b21b6;">
-                                <strong>Model Artifact:</strong> <code>pyspark_model_training/sentiment_model.joblib</code>
+                                <strong>Source File:</strong> <code>pyspark_model_training/sentiment_model.joblib</code>
                             </div>
                         </div>
                     </div>
@@ -193,13 +287,16 @@
                             </div>
                             <h6 class="text-success fw-semibold" style="font-size: 0.85rem;">MongoDB Atlas (Hot) + Snappy Parquet (Cold)</h6>
                             <p class="text-secondary small mb-2">
-                                <strong>Hot Tier (MongoDB):</strong> Serves live dashboard queries, keyword search, and Server-Sent Events with sub-20ms response time.
+                                <strong>Hot Tier (MongoDB Atlas):</strong> Indexed on <span class="code-pill">_id: -1</span> and <span class="code-pill">is_verified</span>. Serves live dashboard queries, keyword filtering, and Server-Sent Events with sub-20ms latency.
                             </p>
                             <p class="text-secondary small mb-2">
-                                <strong>Cold Tier (Parquet):</strong> Periodically compacts tweets older than 30 days into Snappy Columnar <code>.parquet</code> files, saving &gt;80% storage cost while providing instant distributed read performance for AI retraining.
+                                <strong>Cold Tier (Apache Parquet):</strong> The <span class="code-pill">data_lakehouse.py</span> engine migrates older tweets into columnar Snappy-compressed <span class="code-pill">.parquet</span> files.
+                            </p>
+                            <p class="text-secondary small mb-2">
+                                <strong>Storage Optimization:</strong> Compresses dictionary metadata by <strong>&gt;80%</strong>, keeps MongoDB fast, and enables PySpark to scan millions of rows in seconds using column pruning.
                             </p>
                             <div class="p-2 rounded small" style="background: #dcfce7; color: #166534;">
-                                <strong>Code Location:</strong> <code>kafka_spark_streaming/data_lakehouse.py</code>
+                                <strong>Source File:</strong> <code>kafka_spark_streaming/data_lakehouse.py</code>
                             </div>
                         </div>
                     </div>
@@ -208,11 +305,11 @@
             </div>
         </div>
 
-        <!-- 4. Detailed Step-by-Step Data Journey -->
+        <!-- 5. Detailed Step-by-Step Data Journey -->
         <div class="card spec-card shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-0">
                 <h4 class="fw-bold mb-1 text-dark">🔄 Step-by-Step Data Journey (Lifecycle of a Tweet)</h4>
-                <p class="text-muted small mb-0">How raw text is scraped, buffered, classified, persisted, and fed into the active learning loop.</p>
+                <p class="text-muted small mb-0">How a single raw tweet is scraped, sanitized, buffered, classified, persisted, and fed into the retraining loop.</p>
             </div>
             <div class="card-body p-4 pt-1">
                 <div class="list-group list-group-flush">
@@ -335,7 +432,7 @@
             </div>
         </div>
 
-        <!-- 5. Comparison Matrix Table -->
+        <!-- 6. Comparison Matrix Table -->
         <div class="card spec-card shadow-sm mb-4">
             <div class="card-header bg-white py-3 border-0">
                 <h4 class="fw-bold mb-1 text-dark">📊 Single-Server Script vs. This Big Data Architecture</h4>
@@ -381,13 +478,39 @@
             </div>
         </div>
 
-        <!-- 6. Navigation Buttons -->
+        <!-- 7. Interactive Live Classifier Sandbox -->
+        <div class="card spec-card shadow-sm mb-4">
+            <div class="card-header bg-white py-3 border-0">
+                <h4 class="fw-bold mb-1 text-dark">🧪 Live Model Testing Sandbox</h4>
+                <p class="text-muted small mb-0">Test any sentence immediately to verify statistical machine learning inference in action.</p>
+            </div>
+            <div class="card-body p-4 pt-1">
+                <div class="input-group mb-3">
+                    <input type="text" id="testSentenceInput" class="form-control" placeholder="e.g. Tesla was founded in July 2003 by Martin Eberhard and Marc Tarpenning." value="Tesla was founded in July 2003 by Martin Eberhard and Marc Tarpenning.">
+                    <button class="btn btn-primary px-4 fw-semibold" type="button" id="btnTestModel">Classify Instantly</button>
+                </div>
+                
+                <div id="testResultBox" class="p-3 rounded-3 border d-none" style="background: #f8fafc;">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <div>
+                            <span class="text-muted small">Predicted Sentiment:</span>
+                            <h4 class="fw-bold mb-0" id="testResultSentiment">-</h4>
+                        </div>
+                        <div>
+                            <span class="badge bg-success px-3 py-2 fs-6" id="testResultBadge">100% Statistical ML</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 8. Navigation Buttons -->
         <div class="text-center mb-5">
             <a href="{{ url_for('dashboard') }}" class="btn btn-primary px-4 py-2 me-2 shadow-sm" style="border-radius: 8px;">
-                📊 View Live Dashboard
+                📊 Open Live Dashboard
             </a>
             <a href="{{ url_for('classify') }}" class="btn btn-outline-secondary px-4 py-2 shadow-sm" style="border-radius: 8px;">
-                🧪 Test Sentences on AI Model
+                🧪 Dedicated Test Desk
             </a>
             <a href="/api/how-it-works" target="_blank" class="btn btn-outline-dark px-3 py-2 shadow-sm" style="border-radius: 8px;">
                 🔗 Raw Architecture API
@@ -396,4 +519,52 @@
 
     </div>
 </div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.getElementById('btnTestModel').addEventListener('click', async function() {
+    const text = document.getElementById('testSentenceInput').value.trim();
+    if (!text) return;
+
+    const btn = document.getElementById('btnTestModel');
+    btn.disabled = true;
+    btn.innerText = 'Analyzing...';
+
+    try {
+        const response = await fetch('/api/classify', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ text: text })
+        });
+        const data = await response.json();
+        
+        const resultBox = document.getElementById('testResultBox');
+        const sentimentEl = document.getElementById('testResultSentiment');
+        const badgeEl = document.getElementById('testResultBadge');
+
+        resultBox.classList.remove('d-none');
+        sentimentEl.innerText = data.prediction || 'Neutral';
+        
+        if (data.prediction === 'Positive') {
+            sentimentEl.className = 'fw-bold mb-0 text-success';
+            badgeEl.className = 'badge bg-success px-3 py-2 fs-6';
+        } else if (data.prediction === 'Negative') {
+            sentimentEl.className = 'fw-bold mb-0 text-danger';
+            badgeEl.className = 'badge bg-danger px-3 py-2 fs-6';
+        } else if (data.prediction === 'Neutral') {
+            sentimentEl.className = 'fw-bold mb-0 text-primary';
+            badgeEl.className = 'badge bg-primary px-3 py-2 fs-6';
+        } else {
+            sentimentEl.className = 'fw-bold mb-0 text-secondary';
+            badgeEl.className = 'badge bg-secondary px-3 py-2 fs-6';
+        }
+    } catch (err) {
+        console.error(err);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = 'Classify Instantly';
+    }
+});
+</script>
 {% endblock %}
