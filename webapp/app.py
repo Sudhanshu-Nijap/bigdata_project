@@ -141,6 +141,15 @@ class PySparkMLEngine:
         if not has_features:
             return "Neutral"
 
+        STRONG_POS = {'love', 'loved', 'loving', 'great', 'awesome', 'excellent', 'amazing', 'happy', 'fantastic', 'best', 'good', 'super', 'wonderful', 'breakthrough', 'excited', 'soaring', 'win', 'wins', 'bullish', 'perfect', 'promising', 'boost', 'favorite'}
+        STRONG_NEG = {'terrible', 'disappointed', 'disappointing', 'horrible', 'worst', 'awful', 'hate', 'hated', 'crash', 'crashed', 'fail', 'failed', 'failure', 'broken', 'error', 'bug', 'angry', 'poor', 'sad', 'sucks', 'suck', 'trash', 'scam', 'fraud', 'hacked', 'hack', 'worm', 'malware', 'threat', 'vulnerability', 'complaint'}
+
+        # Calculate affective valence boost
+        pos_boost = sum(2.5 for w in words if w in STRONG_POS)
+        neg_boost = sum(2.5 for w in words if w in STRONG_NEG)
+        scores[1] += pos_boost
+        scores[0] += neg_boost
+
         best_class = max(range(self.num_classes), key=lambda c: scores[c])
         return self.sentiment_map.get(best_class, "Neutral")
 
