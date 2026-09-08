@@ -109,8 +109,7 @@ class PySparkMLEngine:
                 coeff_matrix = pydict["coefficientMatrix"][0]
                 self.coeff_values = list(coeff_matrix["values"])
                 self.num_rows = int(coeff_matrix["numRows"])
-                self.num_cols = int(coeff_matrix["numCols"])
-                self.is_col_major = not coeff_matrix.get("isRowMajor", False)
+                self.is_transposed = coeff_matrix.get("isTransposed", True)
         except Exception as e:
             pass
 
@@ -135,7 +134,7 @@ class PySparkMLEngine:
                 col = self.vocab_index[w]
                 has_features = True
                 for r in range(self.num_classes):
-                    idx = (col * self.num_rows + r) if self.is_col_major else (r * self.num_cols + col)
+                    idx = (r * self.num_cols + col) if self.is_transposed else (col * self.num_rows + r)
                     if idx < len(self.coeff_values):
                         scores[r] += self.coeff_values[idx]
 
@@ -560,4 +559,4 @@ def health_check():
     }), (200 if connected else 503)
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)), debug=True, use_reloader=False)
+    app.run(host='0.0.0.0', port=int(os.environ.get('PORT', 8000)), debug=True)
