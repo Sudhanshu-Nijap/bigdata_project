@@ -227,6 +227,73 @@ def scrape_page():
     from flask import redirect, url_for
     return redirect(url_for('dashboard'))
 
+@app.route('/how-it-works')
+def how_it_works_page():
+    """Interactive visual walkthrough of the Big Data pipeline."""
+    return render_template('how_it_works.html')
+
+@app.route('/api/how-it-works')
+def api_how_it_works():
+    """API endpoint explaining the project and Big Data architecture in simple words."""
+    return jsonify({
+        "project_title": "Real-Time Big Data Twitter Sentiment Analysis & Lakehouse Pipeline",
+        "summary": "An enterprise Big Data pipeline that streams live tweets, cleans noise, classifies sentiment using a 97.7% accurate ML model, serves live telemetry to a dashboard, and archives historical data in a compressed Parquet Data Lake.",
+        "big_data_pillars": [
+            {
+                "name": "Apache Kafka",
+                "component_role": "Distributed Message Ingestion & Shock Absorber",
+                "simple_explanation": "When thousands of tweets arrive simultaneously, Kafka acts as an ultra-fast buffer. It queues incoming streams in partitioned topics so no data is dropped and downstream systems never crash."
+            },
+            {
+                "name": "Apache Spark (PySpark)",
+                "component_role": "Distributed Micro-Batch & Retraining Engine",
+                "simple_explanation": "Processes data across multiple CPU cores in parallel. It handles stream sanitization, runs ML inference in micro-batches, and retrains models on millions of archived records in seconds."
+            },
+            {
+                "name": "Dual-Feature NLP Model",
+                "component_role": "Machine Learning Classifier (97.7% Accuracy)",
+                "simple_explanation": "Combines Word N-Grams (1-3) and Character N-Grams (3-5) with regularized Logistic Regression. Classifies tweets into 4 sentiments (Positive, Negative, Neutral, Irrelevant) with zero entity bias and zero hardcoded rules."
+            },
+            {
+                "name": "Dual-Tier Data Lakehouse",
+                "component_role": "Hot Storage (MongoDB) + Cold Storage (Snappy Parquet)",
+                "simple_explanation": "Hot tier (MongoDB Atlas) serves real-time dashboard queries with <20ms latency. Cold tier (Snappy Parquet) compacts older tweets by >80% for long-term storage and instant distributed PySpark scans."
+            }
+        ],
+        "end_to_end_flow": [
+            {
+                "step": 1,
+                "title": "Live Tweet Scraper / Ingestion",
+                "action": "Live tweets and public opinions are collected for configured keywords (#AI, #Tech, #Crypto) and formatted into JSON event payloads."
+            },
+            {
+                "step": 2,
+                "title": "Kafka Stream Publishing",
+                "action": "Events are published asynchronously to the 'twitter_tweets' Kafka topic buffer for resilient decoupled queueing."
+            },
+            {
+                "step": 3,
+                "title": "PySpark Cleaning & NLP Inference",
+                "action": "PySpark Structured Streaming strips handles/URLs and executes statistical ML inference in <0.2ms per tweet."
+            },
+            {
+                "step": 4,
+                "title": "Hot Tier Storage & Real-Time Dashboard",
+                "action": "Enriched tweets are saved in MongoDB Atlas and pushed to the web UI via Server-Sent Events (SSE) to update Chart.js graphs and KPI cards."
+            },
+            {
+                "step": 5,
+                "title": "Cold Storage Parquet Lakehouse Compaction",
+                "action": "Older records are migrated into Snappy-compressed .parquet files, saving >80% disk space and keeping MongoDB fast."
+            },
+            {
+                "step": 6,
+                "title": "Human-in-the-Loop Feedback & Automated Retraining",
+                "action": "Users verify or correct sentiment on the dashboard. PySpark retraining scripts ingest verified samples and Parquet archives to update model weights without downtime."
+            }
+        ]
+    })
+
 @app.route('/api/stream-tweets')
 def api_stream_tweets():
     """Server-Sent Events (SSE) real-time streaming endpoint: continuous and rapid."""

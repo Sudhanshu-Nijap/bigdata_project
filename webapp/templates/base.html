@@ -27,6 +27,9 @@
                 <a class="nav-link-custom {% if request.endpoint == 'classify' %}active{% endif %}" href="{{ url_for('classify') }}">
                     Test Classifier
                 </a>
+                <a class="nav-link-custom {% if request.endpoint == 'how_it_works_page' %}active{% endif %}" href="{{ url_for('how_it_works_page') }}">
+                    💡 How It Works
+                </a>
                 <a class="nav-link-custom" href="{{ url_for('health_check') }}" target="_blank">
                     API Health
                 </a>
