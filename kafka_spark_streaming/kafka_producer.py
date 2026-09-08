@@ -14,7 +14,10 @@ DEFAULT_TOPICS = ["#AI", "#Tesla", "#Crypto", "#Bitcoin", "Apple", "#Tech", "#Nv
 
 def get_scraper():
     sys.path.insert(0, os.path.join(os.path.dirname(__file__), ".."))
-    from webapp.tweet_scraper import scrape_tweets
+    try:
+        from webapp.tweet_scraper import scrape_tweets
+    except ImportError:
+        from tweet_scraper import scrape_tweets
     return scrape_tweets
 
 def stream_scraped_batch(producer, scrape_fn, query, count=25):

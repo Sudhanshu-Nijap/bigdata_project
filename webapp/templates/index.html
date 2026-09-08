@@ -3,118 +3,145 @@
 {% block title %}Dashboard - Twitter Sentiment Analysis{% endblock %}
 
 {% block content %}
-<!-- Search & Stream Control -->
-<div class="card p-3 mb-4">
+<!-- Stream Search & Controls -->
+<div class="clean-card p-3 mb-3">
     <form id="dashboardStreamForm" onsubmit="handleStartStream(event)">
-        <div class="row g-3 align-items-end mb-2">
+        <div class="row g-2 align-items-end mb-2">
             <div class="col-md-7">
-                <label for="dashboardQuery" class="form-label fw-bold small">Search Query or Hashtag</label>
+                <label for="dashboardQuery" class="form-label fw-semibold small mb-1">Search Topic or Hashtag:</label>
                 <div class="input-group">
-                    <span class="input-group-text bg-white">🔍</span>
-                    <input type="text" id="dashboardQuery" class="form-control" placeholder="Enter keyword or hashtag, e.g. #AI, Tesla, #Bitcoin" value="#AI" required>
+                    <span class="input-group-text bg-white text-muted">#</span>
+                    <input type="text" id="dashboardQuery" class="form-control" placeholder="Enter keyword, e.g. AI, Tesla, Bitcoin" value="AI" required>
                 </div>
             </div>
             <div class="col-md-5 d-flex gap-2">
                 <button type="submit" id="startBtn" class="btn btn-primary flex-fill">
                     <span class="spinner-grow spinner-grow-sm d-none" id="streamSpinner"></span>
-                    Start Live Stream
+                    ▶ Start Live Stream
                 </button>
                 <button type="button" id="stopBtn" class="btn btn-danger d-none" onclick="handleStopStream()">
-                    Stop Stream
+                    ⏹ Stop Stream
                 </button>
                 <button type="button" id="batchBtn" class="btn btn-outline-secondary" onclick="handleSingleBatch()">
                     Single Batch
                 </button>
-                <button type="button" id="clearBtn" class="btn btn-outline-danger" onclick="handleClearDB()" title="Clear Stored Tweets">
-                    Clear
+                <button type="button" id="clearBtn" class="btn btn-outline-danger" onclick="handleClearDB()" title="Clear Stored Data">
+                    Clear Data
                 </button>
             </div>
         </div>
 
         <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 pt-2 border-top">
-            <div class="d-flex align-items-center gap-2 small">
-                <span class="text-muted">Quick Tags:</span>
-                <a href="javascript:void(0)" class="text-decoration-none" onclick="setSearchQuery('#AI')">#AI</a>
-                <a href="javascript:void(0)" class="text-decoration-none" onclick="setSearchQuery('Tesla')">Tesla</a>
-                <a href="javascript:void(0)" class="text-decoration-none" onclick="setSearchQuery('#Bitcoin')">#Bitcoin</a>
-                <a href="javascript:void(0)" class="text-decoration-none" onclick="setSearchQuery('Apple')">Apple</a>
-                <a href="javascript:void(0)" class="text-decoration-none" onclick="setSearchQuery('#Crypto')">#Crypto</a>
+            <div class="d-flex align-items-center flex-wrap gap-2">
+                <span class="small text-muted me-1">Quick Topics:</span>
+                <span class="quick-pill" onclick="setSearchQuery('AI')">#AI</span>
+                <span class="quick-pill" onclick="setSearchQuery('Tesla')">Tesla</span>
+                <span class="quick-pill" onclick="setSearchQuery('Bitcoin')">#Bitcoin</span>
+                <span class="quick-pill" onclick="setSearchQuery('Apple')">Apple</span>
+                <span class="quick-pill" onclick="setSearchQuery('Crypto')">#Crypto</span>
+                <span class="quick-pill" onclick="setSearchQuery('Nvidia')">Nvidia</span>
             </div>
-            <div id="streamStatusBadge" class="small">
-                <span class="badge bg-secondary">Waiting for Search</span>
+            <div id="streamStatusBadge">
+                <span class="badge bg-secondary">Ready</span>
             </div>
         </div>
     </form>
 </div>
 
-<!-- Stats Row -->
-<div class="row g-3 mb-4">
+<!-- Key Performance Indicators (KPI Cards) -->
+<div class="row g-3 mb-3">
     <div class="col-12 col-sm-6 col-lg">
-        <div class="card stat-card h-100">
-            <div class="stat-title">Total Analyzed</div>
-            <div class="stat-number text-dark" id="stat-total">{{ len_data }}</div>
-            <div class="stat-subtitle" id="stat-query-label">Active Query: None</div>
+        <div class="stat-box h-100">
+            <div class="stat-label">Total Analyzed</div>
+            <div class="stat-value text-dark" id="stat-total">{{ len_data }}</div>
+            <div class="stat-sub" id="stat-query-label">Topic: None</div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-lg">
-        <div class="card stat-card h-100">
-            <div class="stat-title text-success">Positive</div>
-            <div class="stat-number text-success" id="stat-pos-rate">{{ sentiment_rates.get('Positive', 0) }}%</div>
-            <div class="stat-subtitle" id="stat-pos-count">{{ sentiment_counts.get('Positive', 0) }} tweets</div>
+        <div class="stat-box h-100">
+            <div class="stat-label text-success">Positive</div>
+            <div class="stat-value text-success" id="stat-pos-rate">{{ sentiment_rates.get('Positive', 0) }}%</div>
+            <div class="stat-sub" id="stat-pos-count">{{ sentiment_counts.get('Positive', 0) }} tweets</div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-lg">
-        <div class="card stat-card h-100">
-            <div class="stat-title text-danger">Negative</div>
-            <div class="stat-number text-danger" id="stat-neg-rate">{{ sentiment_rates.get('Negative', 0) }}%</div>
-            <div class="stat-subtitle" id="stat-neg-count">{{ sentiment_counts.get('Negative', 0) }} tweets</div>
+        <div class="stat-box h-100">
+            <div class="stat-label text-danger">Negative</div>
+            <div class="stat-value text-danger" id="stat-neg-rate">{{ sentiment_rates.get('Negative', 0) }}%</div>
+            <div class="stat-sub" id="stat-neg-count">{{ sentiment_counts.get('Negative', 0) }} tweets</div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-lg">
-        <div class="card stat-card h-100">
-            <div class="stat-title text-primary">Neutral</div>
-            <div class="stat-number text-primary" id="stat-neu-rate">{{ sentiment_rates.get('Neutral', 0) }}%</div>
-            <div class="stat-subtitle" id="stat-neu-count">{{ sentiment_counts.get('Neutral', 0) }} tweets</div>
+        <div class="stat-box h-100">
+            <div class="stat-label text-primary">Neutral</div>
+            <div class="stat-value text-primary" id="stat-neu-rate">{{ sentiment_rates.get('Neutral', 0) }}%</div>
+            <div class="stat-sub" id="stat-neu-count">{{ sentiment_counts.get('Neutral', 0) }} tweets</div>
         </div>
     </div>
     <div class="col-12 col-sm-6 col-lg">
-        <div class="card stat-card h-100">
-            <div class="stat-title text-secondary">Irrelevant</div>
-            <div class="stat-number text-secondary" id="stat-irr-rate">{{ sentiment_rates.get('Irrelevant', 0) }}%</div>
-            <div class="stat-subtitle" id="stat-irr-count">{{ sentiment_counts.get('Irrelevant', 0) }} tweets</div>
+        <div class="stat-box h-100">
+            <div class="stat-label text-purple" style="color: #9333ea;">Irrelevant</div>
+            <div class="stat-value" style="color: #9333ea;" id="stat-irr-rate">{{ sentiment_rates.get('Irrelevant', 0) }}%</div>
+            <div class="stat-sub" id="stat-irr-count">{{ sentiment_counts.get('Irrelevant', 0) }} tweets</div>
         </div>
     </div>
 </div>
 
-<!-- Charts Row -->
-<div class="row g-3 mb-4">
+<!-- Clean Charts Row -->
+<div class="row g-3 mb-3">
     <div class="col-lg-6">
-        <div class="card h-100 p-3">
-            <h6 class="fw-bold mb-3">Sentiment Distribution</h6>
-            <div class="chart-container">
+        <div class="clean-card p-3 h-100">
+            <h6 class="card-title-clean mb-3">Sentiment Distribution</h6>
+            <div style="position: relative; height: 240px; width: 100%;">
                 <canvas id="sentimentPieChart"></canvas>
             </div>
         </div>
     </div>
     <div class="col-lg-6">
-        <div class="card h-100 p-3">
-            <h6 class="fw-bold mb-3">Volume Comparison</h6>
-            <div class="chart-container">
+        <div class="clean-card p-3 h-100">
+            <h6 class="card-title-clean mb-3">Sentiment Volume Comparison</h6>
+            <div style="position: relative; height: 240px; width: 100%;">
                 <canvas id="sentimentBarChart"></canvas>
             </div>
         </div>
     </div>
 </div>
 
-<!-- Tweets Table -->
-<div class="card p-3">
+<!-- Active Learning & Big Data Lakehouse Bar -->
+<div class="clean-card p-3 mb-3">
+    <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+        <div class="d-flex align-items-center gap-2">
+            <span class="badge bg-light text-dark border">Ground Truth</span>
+            <span class="small text-muted">Verified Feedback Samples: <strong id="verifiedCountBadge" class="text-dark">0</strong></span>
+            <button type="button" id="retrainBtn" class="btn btn-sm btn-outline-primary ms-2" onclick="handleTriggerRetraining()">
+                <span class="spinner-border spinner-border-sm d-none" id="retrainSpinner"></span>
+                Retrain PySpark Model
+            </button>
+        </div>
+
+        <div class="d-flex align-items-center gap-2">
+            <span class="small text-muted me-1">Export:</span>
+            <a href="/api/lakehouse/export-parquet" class="btn btn-sm btn-outline-secondary" download>
+                📥 Parquet Archive
+            </a>
+            <a href="/api/lakehouse/export-csv" class="btn btn-sm btn-outline-secondary" download>
+                📑 Verified CSV
+            </a>
+        </div>
+    </div>
+    <div id="retrainAlert" class="mt-2 d-none small p-2 border rounded"></div>
+</div>
+
+<!-- Live Tweets Table -->
+<div class="clean-card p-3">
     <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
         <div>
-            <h6 class="fw-bold mb-0">Live Incoming Tweet Feed</h6>
+            <h6 class="card-title-clean mb-0">Live Incoming Tweet Feed</h6>
             <span class="small text-muted" id="feedSubtitle">Search a topic above to begin real-time analysis</span>
         </div>
-        <div class="d-flex align-items-center gap-2">
-            <input type="text" id="tweetSearchInput" class="form-control form-control-sm" style="width: 180px;" placeholder="Filter feed...">
+        
+        <div class="d-flex align-items-center gap-2 flex-wrap">
+            <input type="text" id="tweetSearchInput" class="form-control form-control-sm" style="width: 170px;" placeholder="Filter tweets...">
             <div class="btn-group btn-group-sm" role="group">
                 <button class="btn btn-outline-secondary active filter-btn" data-filter="all">All</button>
                 <button class="btn btn-outline-secondary filter-btn" data-filter="positive">Positive</button>
@@ -125,20 +152,21 @@
         </div>
     </div>
 
-    <div class="table-responsive border rounded">
-        <table class="table table-hover table-striped mb-0 align-middle">
-            <thead class="table-light">
+    <div class="table-scroll-container">
+        <table class="clean-table">
+            <thead>
                 <tr>
                     <th style="width: 50px;">#</th>
                     <th style="width: 140px;">User</th>
                     <th>Tweet Content</th>
-                    <th style="width: 130px; text-align: center;">Inferred Sentiment</th>
+                    <th style="width: 130px; text-align: center;">Sentiment</th>
+                    <th style="width: 160px; text-align: center;">Correct Label</th>
                 </tr>
             </thead>
             <tbody id="tweetsTableBody">
                 <tr id="emptyRow">
-                    <td colspan="4" class="text-center text-muted py-4">
-                        Search a keyword or hashtag above and click <strong>Start Live Stream</strong> to analyze in real-time.
+                    <td colspan="5" class="text-center py-4 text-muted">
+                        No tweets in feed. Enter a topic above and click <strong>Start Live Stream</strong>.
                     </td>
                 </tr>
             </tbody>

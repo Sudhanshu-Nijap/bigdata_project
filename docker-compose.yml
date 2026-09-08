@@ -49,8 +49,8 @@ services:
   spark-consumer:
     build: .
     container_name: twitter-sentiment-consumer
-    working_dir: /app/Kafka-PySpark
-    command: ["python", "pyspark_consumer.py"]
+    working_dir: /app/kafka_spark_streaming
+    command: ["python", "spark_consumer.py"]
     volumes:
       - .:/app
     environment:
@@ -66,7 +66,7 @@ services:
   producer:
     build: .
     container_name: twitter-sentiment-producer
-    working_dir: /app/Kafka-PySpark
+    working_dir: /app/kafka_spark_streaming
     command: ["python", "kafka_producer.py"]
     volumes:
       - .:/app

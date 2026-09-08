@@ -16,9 +16,9 @@ MONGO_DB = os.getenv("MONGO_DB_NAME", "bigdata_project")
 MONGO_COLL = os.getenv("MONGO_COLLECTION_NAME", "tweets")
 
 # Model path resolution
-MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "ML PySpark Model", "logistic_regression_model.pkl")
+MODEL_PATH = os.path.join(os.path.dirname(__file__), "..", "pyspark_model_training", "spark_pipeline_artifact")
 if not os.path.exists(MODEL_PATH):
-    MODEL_PATH = os.path.join(os.path.dirname(__file__), "logistic_regression_model.pkl")
+    MODEL_PATH = os.path.join(os.path.dirname(__file__), "spark_pipeline_artifact")
 
 # Sentiment mapping
 SENTIMENT_MAP = {0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irrelevant"}

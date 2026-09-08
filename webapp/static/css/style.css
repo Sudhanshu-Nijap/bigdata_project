@@ -1,5 +1,224 @@
-/* Minimal utility overrides (Main styles are in base.html) */
-.badge-positive { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-.badge-negative { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-.badge-neutral { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
-.badge-irrelevant { background-color: #e2d9f3; color: #432874; border: 1px solid #d3c5eb; }
+/* ==========================================================================
+   CLEAN, MODERN & ULTRA-READABLE MINIMALIST THEME
+   ========================================================================== */
+
+:root {
+    --bg-main: #f8fafc;
+    --card-bg: #ffffff;
+    --text-primary: #0f172a;
+    --text-secondary: #475569;
+    --text-muted: #94a3b8;
+    --border-color: #e2e8f0;
+    
+    --pos-color: #16a34a;
+    --pos-bg: #dcfce7;
+    --neg-color: #dc2626;
+    --neg-bg: #fee2e2;
+    --neu-color: #2563eb;
+    --neu-bg: #dbeafe;
+    --irr-color: #9333ea;
+    --irr-bg: #f3e8ff;
+}
+
+body {
+    background-color: var(--bg-main);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    margin: 0;
+}
+
+/* Navbar */
+.navbar-custom {
+    background-color: #ffffff;
+    border-bottom: 1px solid var(--border-color);
+    padding: 0.75rem 0;
+}
+
+.brand-title {
+    font-weight: 700;
+    font-size: 1.15rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.nav-link-custom {
+    color: var(--text-secondary);
+    font-weight: 500;
+    font-size: 0.9rem;
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.nav-link-custom:hover {
+    color: var(--text-primary);
+    background-color: #f1f5f9;
+}
+
+.nav-link-custom.active {
+    color: #0284c7;
+    background-color: #e0f2fe;
+    font-weight: 600;
+}
+
+/* Clean Cards */
+.clean-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+}
+
+.card-title-clean {
+    font-size: 0.95rem;
+    font-weight: 600;
+    color: var(--text-primary);
+    margin: 0;
+}
+
+/* Metric / KPI Stat Cards */
+.stat-box {
+    background-color: #ffffff;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.1rem 1rem;
+    text-align: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+}
+
+.stat-box .stat-label {
+    font-size: 0.8rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text-secondary);
+    margin-bottom: 4px;
+}
+
+.stat-box .stat-value {
+    font-size: 1.8rem;
+    font-weight: 700;
+    line-height: 1.2;
+    margin: 4px 0;
+}
+
+.stat-box .stat-sub {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+}
+
+/* Sentiment Badges */
+.badge-pos {
+    background-color: var(--pos-bg);
+    color: var(--pos-color);
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #bbf7d0;
+}
+
+.badge-neg {
+    background-color: var(--neg-bg);
+    color: var(--neg-color);
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #fecaca;
+}
+
+.badge-neu {
+    background-color: var(--neu-bg);
+    color: var(--neu-color);
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #bfdbfe;
+}
+
+.badge-irr {
+    background-color: var(--irr-bg);
+    color: var(--irr-color);
+    font-weight: 600;
+    font-size: 0.78rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    border: 1px solid #e9d5ff;
+}
+
+/* Clean Table */
+.clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.88rem;
+}
+
+.clean-table thead th {
+    background-color: #f8fafc;
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border-color);
+    padding: 10px 14px;
+}
+
+.clean-table tbody tr {
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.clean-table tbody tr:hover {
+    background-color: #f8fafc;
+}
+
+.clean-table td {
+    padding: 11px 14px;
+    vertical-align: middle;
+}
+
+.table-scroll-container {
+    max-height: 420px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background-color: #ffffff;
+}
+
+/* Quick Tag Pill */
+.quick-pill {
+    background-color: #f1f5f9;
+    color: var(--text-secondary);
+    padding: 3px 9px;
+    border-radius: 12px;
+    font-size: 0.8rem;
+    font-weight: 500;
+    cursor: pointer;
+    text-decoration: none;
+    border: 1px solid var(--border-color);
+    transition: all 0.15s ease;
+}
+
+.quick-pill:hover {
+    background-color: #e2e8f0;
+    color: var(--text-primary);
+}
+
+/* Clean Footer */
+.footer-clean {
+    background-color: #ffffff;
+    border-top: 1px solid var(--border-color);
+    padding: 1rem 0;
+    margin-top: auto;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+}

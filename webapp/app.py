@@ -31,7 +31,7 @@ KAFKA_TOPIC = os.environ.get('KAFKA_TOPIC', 'numtest')
 
 MODEL_PATH = os.environ.get(
     'MODEL_PATH',
-    os.path.join(os.path.dirname(__file__), "..", "ML PySpark Model", "logistic_regression_model.pkl")
+    os.path.join(os.path.dirname(__file__), "..", "pyspark_model_training", "spark_pipeline_artifact")
 )
 SENTIMENT_MAP = {0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irrelevant"}
 
@@ -165,7 +165,12 @@ def fetch_tweets_and_stats(limit=500):
     if collection is not None:
         try:
             raw = list(collection.find().sort('_id', -1).limit(limit))
-            tweets = [{'tweet': item.get('tweet', ''), 'prediction': item.get('prediction', 'Neutral')} for item in raw]
+            tweets = [{
+                'tweet': item.get('tweet', ''),
+                'prediction': item.get('prediction', 'Neutral'),
+                'is_verified': item.get('is_verified', False),
+                'verified_sentiment': item.get('verified_sentiment')
+            } for item in raw]
         except Exception:
             pass
 
@@ -209,6 +214,8 @@ def classify():
                 prediction = classify_tweet_text(text)
             except Exception as e:
                 error, error_text = True, f"Model error: {e}"
+            else:
+                pass
         else:
             error, error_text = True, "Please enter tweet text."
 
@@ -251,6 +258,7 @@ def api_stream_tweets():
                         'tweet': tweet_text,
                         'prediction': prediction,
                         'query': query,
+                        'is_verified': False,
                         'timestamp': time.time()
                     })
                 except Exception:
@@ -262,7 +270,8 @@ def api_stream_tweets():
                 'tweet': tweet_text,
                 'user': item.get('user', 'twitter_user'),
                 'date': item.get('date', 'Live'),
-                'prediction': prediction
+                'prediction': prediction,
+                'is_verified': False
             }
 
             yield f"data: {json.dumps(event_data)}\n\n"
@@ -300,10 +309,11 @@ def api_scrape_analyze():
             'tweet': tweet_text,
             'prediction': prediction,
             'user': item.get('user', 'twitter_user'),
-            'date': item.get('date', 'Recently')
+            'date': item.get('date', 'Recently'),
+            'is_verified': False
         }
         classified_results.append(record)
-        db_documents.append({'tweet': tweet_text, 'prediction': prediction})
+        db_documents.append({'tweet': tweet_text, 'prediction': prediction, 'is_verified': False, 'timestamp': time.time()})
         kafka_payloads.append([str(idx + 1), query, "Unlabeled", tweet_text])
 
     if save_to_db and db_documents:
@@ -326,6 +336,82 @@ def api_scrape_analyze():
         'results': classified_results
     })
 
+@app.route('/api/verify-sentiment', methods=['POST'])
+def api_verify_sentiment():
+    """Human-in-the-Loop endpoint: updates ground truth sentiment in MongoDB for active learning."""
+    data = request.get_json() or {}
+    tweet_text = data.get('tweet', '').strip()
+    verified_sentiment = data.get('verified_sentiment', '').strip()
+    original_prediction = data.get('original_prediction', '')
+
+    if not tweet_text or not verified_sentiment:
+        return jsonify({"error": "Missing tweet text or verified sentiment."}), 400
+
+    _, collection = get_mongo_collection()
+    if collection is not None:
+        try:
+            # Update existing or upsert document
+            collection.update_many(
+                {"tweet": tweet_text},
+                {"$set": {
+                    "prediction": verified_sentiment,
+                    "verified_sentiment": verified_sentiment,
+                    "original_prediction": original_prediction,
+                    "is_verified": True,
+                    "verified_at": time.time()
+                }},
+                upsert=True
+            )
+            verified_count = collection.count_documents({"is_verified": True})
+            return jsonify({
+                "status": "success",
+                "message": f"Tweet verified as '{verified_sentiment}'.",
+                "verified_sentiment": verified_sentiment,
+                "total_verified_records": verified_count
+            })
+        except Exception as e:
+            return jsonify({"error": str(e)}), 500
+
+    return jsonify({
+        "status": "success_local",
+        "message": f"Tweet verified as '{verified_sentiment}'.",
+        "verified_sentiment": verified_sentiment,
+        "total_verified_records": 1
+    })
+
+@app.route('/api/verified-stats', methods=['GET'])
+def api_verified_stats():
+    """Return count of human-verified training samples stored in MongoDB."""
+    _, collection = get_mongo_collection()
+    count = 0
+    if collection is not None:
+        try:
+            count = collection.count_documents({"is_verified": True})
+        except Exception:
+            pass
+    return jsonify({"verified_samples_count": count})
+
+@app.route('/api/retrain-model', methods=['POST'])
+def api_retrain_model():
+    """Trigger PySpark batch retraining on baseline CSV + verified MongoDB feedback."""
+    try:
+        from spark_retrainer import run_retraining
+    except ImportError:
+        try:
+            from kafka_spark_streaming.spark_retrainer import run_retraining
+        except ImportError:
+            sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "kafka_spark_streaming"))
+            from spark_retrainer import run_retraining
+
+    try:
+        result = run_retraining()
+        # Reset cached model pipeline to reload newly trained weights
+        global _pipeline
+        _pipeline = None
+        return jsonify(result)
+    except Exception as e:
+        return jsonify({"status": "error", "message": f"Retraining failed: {e}"}), 500
+
 @app.route('/api/clear-db', methods=['POST'])
 def api_clear_db():
     """Clear all tweets from MongoDB collection on demand."""
@@ -338,23 +424,97 @@ def api_clear_db():
             return jsonify({"error": str(e)}), 500
     return jsonify({"status": "no_db"}), 200
 
+@app.route('/api/lakehouse/stats')
+def api_lakehouse_stats():
+    """Return Big Data Lakehouse metrics, Parquet compression savings, and stream volatility."""
+    try:
+        from kafka_spark_streaming.data_lakehouse import generate_lakehouse_parquet, compute_stream_volatility
+    except ImportError:
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "kafka_spark_streaming"))
+        from data_lakehouse import generate_lakehouse_parquet, compute_stream_volatility
+
+    try:
+        meta = generate_lakehouse_parquet()
+        volatility = compute_stream_volatility()
+        return jsonify({
+            "status": "active",
+            "format": "Apache Parquet (Snappy Columnar)",
+            "record_count": meta["record_count"],
+            "raw_json_size_kb": meta["raw_json_size_kb"],
+            "parquet_size_kb": meta["parquet_size_kb"],
+            "compression_savings_pct": meta["compression_savings_pct"],
+            "stream_volatility": volatility
+        })
+    except Exception as e:
+        return jsonify({"status": "error", "message": str(e)}), 500
+
+@app.route('/api/lakehouse/export-parquet')
+def api_export_parquet():
+    """Download live/verified stream archive as a compressed Snappy Parquet file."""
+    from flask import send_file
+    import io
+    try:
+        from kafka_spark_streaming.data_lakehouse import generate_lakehouse_parquet
+    except ImportError:
+        sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "kafka_spark_streaming"))
+        from data_lakehouse import generate_lakehouse_parquet
+
+    meta = generate_lakehouse_parquet()
+    buffer = io.BytesIO(meta["parquet_bytes"])
+    buffer.seek(0)
+    return send_file(
+        buffer,
+        mimetype="application/octet-stream",
+        as_attachment=True,
+        download_name=f"twitter_lakehouse_archive_{int(time.time())}.parquet"
+    )
+
+@app.route('/api/lakehouse/export-csv')
+def api_export_csv():
+    """Export verified ground-truth training records as CSV."""
+    from flask import send_file
+    import io
+    import pandas as pd
+    _, collection = get_mongo_collection()
+    docs = []
+    if collection is not None:
+        try:
+            docs = list(collection.find({"is_verified": True}, {"_id": 0}))
+        except Exception:
+            pass
+
+    if not docs:
+        docs = [{"tweet": "Sample verified tweet", "prediction": "Positive", "is_verified": True}]
+
+    df = pd.DataFrame(docs)
+    csv_buffer = io.BytesIO()
+    df.to_csv(csv_buffer, index=False)
+    csv_buffer.seek(0)
+    return send_file(
+        csv_buffer,
+        mimetype="text/csv",
+        as_attachment=True,
+        download_name=f"ground_truth_verified_{int(time.time())}.csv"
+    )
 @app.route('/api/health')
 def health_check():
     client, collection = get_mongo_collection()
-    connected, count = False, 0
+    connected, count, verified_count = False, 0, 0
     if client:
         try:
             client.admin.command('ping')
             connected = True
             if collection is not None:
                 count = collection.estimated_document_count()
+                verified_count = collection.count_documents({"is_verified": True})
         except Exception:
             connected = False
 
     return jsonify({
         "status": "healthy" if connected else "degraded",
         "database": "connected" if connected else "disconnected",
-        "total_tweets_indexed": count
+        "total_tweets_indexed": count,
+        "verified_feedback_samples": verified_count
     }), (200 if connected else 503)
 
 if __name__ == '__main__':

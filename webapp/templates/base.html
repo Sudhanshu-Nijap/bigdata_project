@@ -3,111 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Twitter Sentiment Analysis{% endblock %}</title>
-    <!-- Bootstrap 5 CDN for clean, reliable minimalist UI -->
+    <title>{% block title %}Twitter Sentiment Analysis Dashboard{% endblock %}</title>
+    <!-- Bootstrap 5 CSS -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Custom Clean CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
     <!-- Chart.js -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
-    <style>
-        body {
-            background-color: #f8f9fa;
-            color: #212529;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-        }
-        .navbar-brand {
-            font-weight: 700;
-            font-size: 1.1rem;
-        }
-        .main-container {
-            flex: 1;
-            padding-top: 1.5rem;
-            padding-bottom: 2rem;
-        }
-        .card {
-            border: 1px solid #dee2e6;
-            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-            border-radius: 6px;
-            background-color: #ffffff;
-        }
-        .stat-card {
-            padding: 1rem;
-            text-align: center;
-        }
-        .stat-card .stat-title {
-            font-size: 0.8rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            color: #6c757d;
-        }
-        .stat-card .stat-number {
-            font-size: 1.6rem;
-            font-weight: 700;
-            margin: 0.25rem 0;
-        }
-        .stat-card .stat-subtitle {
-            font-size: 0.8rem;
-            color: #6c757d;
-        }
-        .badge-positive { background-color: #d1e7dd; color: #0f5132; border: 1px solid #badbcc; }
-        .badge-negative { background-color: #f8d7da; color: #842029; border: 1px solid #f5c2c7; }
-        .badge-neutral { background-color: #cff4fc; color: #055160; border: 1px solid #b6effb; }
-        .badge-irrelevant { background-color: #e2d9f3; color: #432874; border: 1px solid #d3c5eb; }
-        .chart-container {
-            position: relative;
-            height: 240px;
-            width: 100%;
-        }
-        .table-responsive {
-            max-height: 400px;
-            overflow-y: auto;
-        }
-        .footer {
-            background-color: #ffffff;
-            border-top: 1px solid #dee2e6;
-            padding: 0.85rem 0;
-            font-size: 0.85rem;
-            color: #6c757d;
-            text-align: center;
-        }
-    </style>
     {% block head %}{% endblock %}
 </head>
 <body>
-    <nav class="navbar navbar-expand-lg navbar-light bg-white border-bottom">
-        <div class="container">
-            <a class="navbar-brand" href="{{ url_for('dashboard') }}">Twitter Sentiment Analysis</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navMenu">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navMenu">
-                <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'dashboard' %}active fw-bold text-primary{% endif %}" href="{{ url_for('dashboard') }}">Live Dashboard</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link {% if request.endpoint == 'classify' %}active fw-bold text-primary{% endif %}" href="{{ url_for('classify') }}">Classify Text</a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="{{ url_for('health_check') }}" target="_blank">Health API</a>
-                    </li>
-                </ul>
-            </div>
+    <!-- Clean Minimalist Navbar -->
+    <header class="navbar-custom mb-3">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <a class="brand-title" href="{{ url_for('dashboard') }}">
+                📊 Real-Time Twitter Sentiment Analysis
+            </a>
+            
+            <nav class="d-flex align-items-center gap-2">
+                <a class="nav-link-custom {% if request.endpoint == 'dashboard' %}active{% endif %}" href="{{ url_for('dashboard') }}">
+                    Live Dashboard
+                </a>
+                <a class="nav-link-custom {% if request.endpoint == 'classify' %}active{% endif %}" href="{{ url_for('classify') }}">
+                    Test Classifier
+                </a>
+                <a class="nav-link-custom" href="{{ url_for('health_check') }}" target="_blank">
+                    API Health
+                </a>
+            </nav>
         </div>
-    </nav>
+    </header>
 
-    <main class="container main-container">
+    <!-- Main Content Container -->
+    <main class="container mb-4">
         {% block content %}{% endblock %}
     </main>
 
-    <footer class="footer">
-        <div class="container">
-            <span>Real-Time Big Data Pipeline &bull; Kafka, PySpark, MongoDB, Flask</span>
+    <!-- Minimalist Footer -->
+    <footer class="footer-clean text-center">
+        <div class="container d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+                Big Data Pipeline &bull; Apache Kafka &bull; PySpark MLlib &bull; MongoDB &bull; Flask
+            </div>
+            <div>
+                Real-Time Streaming Analytics
+            </div>
         </div>
     </footer>
 
+    <!-- Bootstrap 5 JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
     {% block scripts %}{% endblock %}
 </body>
