@@ -3,6 +3,11 @@ import sys
 import re
 import json
 import time
+
+# Ensure PySpark workers always use the current active Python executable (avoids Windows App Execution Alias error)
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
 from flask import Flask, render_template, request, jsonify, Response
 from pymongo import MongoClient
 from dotenv import load_dotenv

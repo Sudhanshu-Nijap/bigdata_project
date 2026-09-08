@@ -8,6 +8,11 @@ import os
 import re
 import sys
 import time
+
+# Ensure PySpark workers always use the current active Python executable
+os.environ["PYSPARK_PYTHON"] = sys.executable
+os.environ["PYSPARK_DRIVER_PYTHON"] = sys.executable
+
 from pymongo import MongoClient
 
 # Configuration
