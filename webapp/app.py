@@ -67,69 +67,92 @@ def get_spark_and_model():
 
     return _spark, _pipeline
 
-POSITIVE_LEXICON = {
-    'good', 'great', 'awesome', 'excellent', 'amazing', 'love', 'loved', 'loving',
-    'bullish', 'soaring', 'soar', 'win', 'winning', 'winner', 'profit', 'profits', 'gains',
-    'gain', 'gaining', 'moon', 'innovative', 'innovation', 'best', 'fantastic', 'super',
-    'happy', 'success', 'successful', 'breakthrough', 'clean', 'legend', 'positive',
-    'excited', 'exciting', 'growth', 'grow', 'growing', 'surging', 'surge', 'gem',
-    'strong', 'solid', 'top', 'buy', 'pump', 'beautiful', 'perfect', 'nice', 'delight',
-    'wonderful', 'reward', 'benefit', 'up', 'all-time-high', 'ath', 'optimistic',
-    'impressive', 'promising', 'boost', 'boosting', 'rally', 'rallying', 'leading', 'leader',
-    'favorite', 'speed', 'fast', 'smooth', 'recommend', 'recommended', 'brilliant',
-    'opportunity', 'upgrade', 'upgraded', 'impressed', 'impress', 'outperform', 'beat',
-    'high', 'higher', 'highest', 'record', 'prosper', 'shine', 'valuable', 'advance', 'advanced'
-}
+class PySparkMLEngine:
+    """
+    Direct high-performance inference engine for the PySpark MLlib PipelineModel.
+    Evaluates CountVectorizer + Logistic Regression weights (W * X + b) trained by PySpark.
+    """
+    def __init__(self, model_dir=MODEL_PATH):
+        self.model_dir = model_dir
+        self.vocab_index = {}
+        self.intercepts = [0.0, 0.0, 0.0, 0.0]
+        self.coeff_values = []
+        self.num_classes = 4
+        self.num_rows = 4
+        self.num_cols = 0
+        self.is_col_major = True
+        self.sentiment_map = {0: "Negative", 1: "Positive", 2: "Neutral", 3: "Irrelevant"}
+        self.load_model()
 
-NEGATIVE_LEXICON = {
-    'bad', 'terrible', 'horrible', 'worst', 'awful', 'hate', 'hated', 'dump',
-    'bearish', 'loss', 'losses', 'losing', 'loser', 'scam', 'fraud', 'crash',
-    'crashing', 'crashed', 'drop', 'dropping', 'dropped', 'down', 'fail', 'failed',
-    'failure', 'broken', 'error', 'errors', 'bug', 'bugs', 'angry', 'poor', 'sad',
-    'disappointed', 'disappointing', 'sell', 'selling', 'sucks', 'suck', 'trash',
-    'waste', 'ugly', 'rug', 'rugpull', 'scammer', 'hacked', 'hack', 'exploit',
-    'tanking', 'plummet', 'garbage', 'fud', 'liquidation', 'lawsuit', 'sue', 'sued',
-    'sec', 'fine', 'penalty', 'warning', 'warn', 'concern', 'risk', 'risky', 'danger',
-    'dead', 'regret', 'regretted', 'regretting', 'complaint', 'complain', 'slow',
-    'freeze', 'trouble', 'flaw', 'flaws', 'recall', 'protest', 'protesting', 'struggle',
-    'shed', 'sheds', 'cut', 'cutting', 'decline', 'declining', 'crisis', 'threat', 'delay'
-}
+    def load_model(self):
+        try:
+            import pyarrow.parquet as pq
+            import glob
 
-NEGATION_WORDS = {'not', 'no', 'never', 'none', 'neither', 'hardly', 'barely', 'scarcely', 'isnt', 'arent', 'wasnt', 'werent', 'dont', 'doesnt', 'didnt', 'wont'}
+            # 1. Load CountVectorizer Vocabulary
+            vocab_pattern = os.path.join(self.model_dir, "stages", "*CountVectorizer*", "data")
+            vocab_dirs = glob.glob(vocab_pattern)
+            if vocab_dirs:
+                vocab_table = pq.read_table(vocab_dirs[0])
+                vocab = vocab_table.to_pydict()["vocabulary"][0]
+                self.vocab_index = {w.lower(): i for i, w in enumerate(vocab)}
+                self.num_cols = len(vocab)
+
+            # 2. Load Logistic Regression Weights & Intercepts
+            lr_pattern = os.path.join(self.model_dir, "stages", "*LogisticRegression*", "data")
+            lr_dirs = glob.glob(lr_pattern)
+            if lr_dirs:
+                lr_table = pq.read_table(lr_dirs[0])
+                pydict = lr_table.to_pydict()
+                self.num_classes = int(pydict["numClasses"][0])
+                self.intercepts = list(pydict["interceptVector"][0]["values"])
+                coeff_matrix = pydict["coefficientMatrix"][0]
+                self.coeff_values = list(coeff_matrix["values"])
+                self.num_rows = int(coeff_matrix["numRows"])
+                self.num_cols = int(coeff_matrix["numCols"])
+                self.is_col_major = not coeff_matrix.get("isRowMajor", False)
+        except Exception as e:
+            pass
+
+    def predict(self, text: str) -> str:
+        """Run ML Model inference using learned PySpark weights (W * X + b)."""
+        if not text or not text.strip():
+            return "Neutral"
+
+        raw = text.strip()
+        words = re.findall(r'[a-zA-Z]+', raw.lower())
+        if not words:
+            return "Neutral"
+
+        if not self.coeff_values or not self.vocab_index:
+            return "Neutral"
+
+        scores = list(self.intercepts)
+        has_features = False
+
+        for w in words:
+            if w in self.vocab_index:
+                col = self.vocab_index[w]
+                has_features = True
+                for r in range(self.num_classes):
+                    idx = (col * self.num_rows + r) if self.is_col_major else (r * self.num_cols + col)
+                    if idx < len(self.coeff_values):
+                        scores[r] += self.coeff_values[idx]
+
+        if not has_features:
+            return "Neutral"
+
+        best_class = max(range(self.num_classes), key=lambda c: scores[c])
+        return self.sentiment_map.get(best_class, "Neutral")
+
+_ml_engine = PySparkMLEngine()
 
 def classify_tweet_text(text: str) -> str:
-    """Classify tweet using high-speed NLP engine aligned with PySpark trained lexicon."""
-    if not text or not text.strip():
-        return "Neutral"
-
-    raw = text.strip()
-    words = re.findall(r'[a-zA-Z]+', raw.lower())
-    if len(words) < 3 and ('http' in raw.lower() or '@' in raw):
-        return 'Irrelevant'
-
-    pos_score, neg_score = 0.0, 0.0
-    for i, w in enumerate(words):
-        is_negated = (i > 0 and words[i-1] in NEGATION_WORDS) or (i > 1 and words[i-2] in NEGATION_WORDS)
-        if w in POSITIVE_LEXICON:
-            if is_negated:
-                neg_score += 1.5
-            else:
-                pos_score += 1.0
-        elif w in NEGATIVE_LEXICON:
-            if is_negated:
-                pos_score += 1.0
-            else:
-                neg_score += 1.5
-
-    if pos_score > neg_score and pos_score >= 1.0:
-        return 'Positive'
-    elif neg_score > pos_score and neg_score >= 1.0:
-        return 'Negative'
-    elif pos_score == 0 and neg_score == 0:
-        if 'http' in raw.lower() or 't.co' in raw.lower() or len(words) < 4:
-            return 'Irrelevant'
-        return 'Neutral'
-    return 'Neutral'
+    """Classify tweet using direct PySpark ML Model inference."""
+    global _ml_engine
+    if _ml_engine is None:
+        _ml_engine = PySparkMLEngine()
+    return _ml_engine.predict(text)
 
 def publish_to_kafka(payloads):
     """Publish tweet batch to Kafka broker."""
@@ -422,9 +445,11 @@ def api_retrain_model():
 
     try:
         result = run_retraining()
-        # Reset cached model pipeline to reload newly trained weights
-        global _pipeline
+        # Reset and reload cached model pipeline and ML engine weights
+        global _pipeline, _ml_engine
         _pipeline = None
+        if _ml_engine:
+            _ml_engine.load_model()
         return jsonify(result)
     except Exception as e:
         return jsonify({"status": "error", "message": f"Retraining failed: {e}"}), 500
