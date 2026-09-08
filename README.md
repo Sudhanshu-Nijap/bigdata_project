@@ -11,200 +11,37 @@ A scalable, end-to-end Big Data pipeline designed for **real-time ingestion, dis
 
 ---
 
-## 📌 System Architecture & Pipeline Diagrams
+## 📌 System Architecture & Project Diagrams
 
-### 1. End-to-End Big Data Pipeline Architecture (Lambda Architecture)
+### 1. End-to-End System Architecture (IEEE Flowchart)
 
-```mermaid
-flowchart TD
-    subgraph INGESTION["1. Ingestion Layer (Producers)"]
-        A["Twitter / X Live Stream<br/>(Hashtags, Keywords, Real-time Feeds)"] --> B["Kafka Producer<br/>(kafka_producer.py)"]
-        Synthetic["High-Throughput Synthetic Stream<br/>(Benchmark Generator)"] --> B
-    end
+![Fig. 1. End-to-End Distributed Architecture Flowchart](project_diagrams/architecture_diagram.png)
 
-    subgraph BROKER["2. Distributed Message Broker"]
-        B --> C[("Apache Kafka Cluster<br/>Topic: numtest | Replication & Partitioning")]
-    end
-
-    subgraph STREAMING["3. Distributed Stream Processing (Speed Layer)"]
-        C --> D["PySpark Structured Streaming Consumer<br/>(spark_consumer.py)"]
-        D --> E["PySpark MLlib Pipeline<br/>(spark_pipeline_artifact)"]
-        D --> V["Sliding-Window Volatility Engine<br/>(Anomaly & Shift Detection)"]
-    end
-
-    subgraph STORAGE["4. Storage Tiering (Hot vs. Cold)"]
-        E --> F[("MongoDB NoSQL<br/>(Hot Operational Store - Sub-second Reads)")]
-        E --> G[("Apache Parquet Data Lakehouse<br/>(Cold Analytical Store - Snappy Compressed ~80% Saved)")]
-    end
-
-    subgraph ACTIVE_LEARNING["5. Active Learning & Batch Retraining (Batch Layer)"]
-        F -- "Human Verified Feedback<br/>(is_verified: true)" --> H["PySpark Batch Retrainer<br/>(spark_retrainer.py)"]
-        I["Baseline Labeled Datasets<br/>(training_dataset.csv)"] --> H
-        H -- "Export Updated Model Artifact" --> E
-    end
-
-    subgraph PRESENTATION["6. Serving & Visualization Layer"]
-        F --> J["Flask Web Application<br/>(app.py - Port 8000)"]
-        V --> J
-        J --> K["Real-Time KPI Counters & Volatility Radar"]
-        J --> L["Chart.js Dynamic Sentiment Donut & Bar Charts"]
-        J --> M["Interactive Model Testing Desk (/classify)"]
-        J --> N["Apache Parquet / CSV Lakehouse Data Exporter"]
-    end
-
-    classDef ing fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a;
-    classDef brk fill:#f1f5f9,stroke:#475569,stroke-width:2px,color:#0f172a;
-    classDef stm fill:#ffedd5,stroke:#ea580c,stroke-width:2px,color:#0f172a;
-    classDef str fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#0f172a;
-    classDef ml fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#0f172a;
-    classDef ui fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#0f172a;
-
-    class A,B,Synthetic ing;
-    class C brk;
-    class D,E,V stm;
-    class F,G str;
-    class H,I ml;
-    class J,K,L,M,N ui;
-```
+* **Fig. 1**: Sequential IEEE-standard processing flow showing data ingestion ($D_{stream}$), Kafka partitioned message broker, PySpark Structured Streaming consumer, MLlib multiclass classification, dual-tier persistence (MongoDB NoSQL + Parquet Lakehouse), and the Active Learning retraining feedback loop.
 
 ---
 
-### 2. Distributed Streaming & Partitioning Topology
+### 2. PySpark MLlib NLP Feature Extraction & Inference Pipeline
 
-```mermaid
-flowchart LR
-    subgraph KAFKA["Apache Kafka Broker"]
-        P0["Partition 0"]
-        P1["Partition 1"]
-        P2["Partition 2"]
-    end
+![Fig. 2. PySpark MLlib NLP Pipeline Architecture](project_diagrams/spark_nlp_pipeline.png)
 
-    subgraph SPARK["PySpark Distributed Worker Nodes"]
-        W1["Spark Executor 1<br/>(Task Partition 0)"]
-        W2["Spark Executor 2<br/>(Task Partition 1)"]
-        W3["Spark Executor 3<br/>(Task Partition 2)"]
-    end
-
-    subgraph SINKS["Dual Persistence Sinks"]
-        M[("MongoDB Operational Sink<br/>(High-throughput Writes)")]
-        P[("Snappy Parquet Sink<br/>(Columnar Lakehouse Storage)")]
-    end
-
-    P0 --> W1
-    P1 --> W2
-    P2 --> W3
-
-    W1 --> M & P
-    W2 --> M & P
-    W3 --> M & P
-```
+* **Fig. 2**: Sequential IEEE-standard stage-by-stage feature transformation pipeline: $\text{Raw Tweet} \rightarrow \text{Regex Sanitizer} \rightarrow \text{RegexTokenizer} \rightarrow \text{StopWordsRemover} \rightarrow \text{HashingTF (10,000 features)} \rightarrow \text{IDF} \rightarrow \text{LogisticRegressionModel} \rightarrow \text{Sentiment Output} (\text{Positive}, \text{Negative}, \text{Neutral}, \text{Irrelevant})$.
 
 ---
 
-### 3. PySpark MLlib NLP Feature Extraction Pipeline
+### 3. Big Data Storage Tiering: Hot Operational Store vs. Cold Data Lakehouse
 
-```mermaid
-flowchart LR
-    A["Raw Tweet Text"] --> B["Regex Sanitizer<br/>(Remove URLs, @mentions, #hashtags, punctuation)"]
-    B --> C["Tokenizer<br/>(Splits text into tokenized words)"]
-    C --> D["StopWordsRemover<br/>(Filters English stopwords: 'the', 'is', 'at')"]
-    D --> E["HashingTF<br/>(Term Frequency Feature Vector - 10,000 bins)"]
-    E --> F["IDF<br/>(Inverse Document Frequency scaling)"]
-    F --> G["Multiclass Logistic Regression<br/>(spark_pipeline_artifact)"]
-    G --> H{"Predicted Sentiment"}
-    H --> I["Positive [1]"]
-    H --> J["Negative [0]"]
-    H --> K["Neutral [2]"]
-    H --> L["Irrelevant [3]"]
+![Fig. 3. Dual Storage Tiering Architecture](project_diagrams/lakehouse_tiering.png)
 
-    classDef text fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a;
-    classDef nlp fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#0f172a;
-    classDef model fill:#f3e8ff,stroke:#9333ea,stroke-width:2px,color:#0f172a;
-    classDef pred fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#0f172a;
-
-    class A,B text;
-    class C,D,E,F nlp;
-    class G,H model;
-    class I,J,K,L pred;
-```
+* **Fig. 3**: Dual storage topology detailing separation of concerns between Hot Operational Sink (MongoDB NoSQL for sub-second UI telemetry) and Cold Analytical Lakehouse (Snappy Apache Parquet with ~82% disk footprint reduction and fast OLAP columnar scans).
 
 ---
 
-### 4. Human-in-the-Loop Active Learning Feedback Loop
+### 4. Human-in-the-Loop Active Learning & Automated Retraining Loop
 
-```mermaid
-sequenceDiagram
-    autonumber
-    actor User as User / Data Analyst
-    participant Dashboard as Flask Dashboard (UI)
-    participant Mongo as MongoDB NoSQL Store
-    participant Spark as PySpark MLlib Retrainer
-    participant Model as Production ML Pipeline Artifact
+![Fig. 4. Closed-Loop Active Learning Flowchart](project_diagrams/active_learning_flow.png)
 
-    User->>Dashboard: Views live streaming tweet in teleprinter feed
-    User->>Dashboard: Clicks "+Pos / -Neg / Neu / Irr" to correct or confirm label
-    Dashboard->>Mongo: POST /api/verify-sentiment (sets is_verified: true)
-    User->>Dashboard: Clicks "Retrain PySpark Model"
-    Dashboard->>Spark: POST /api/retrain-model
-    Spark->>Mongo: Fetch all verified ground-truth records
-    Spark->>Spark: Merge verified feedback with baseline training_dataset.csv
-    Spark->>Spark: Fit PipelineModel & Evaluate on validation_dataset.csv
-    Spark->>Model: Overwrite spark_pipeline_artifact with newly trained weights
-    Spark-->>Dashboard: Return retrained accuracy & F1-score telemetry
-    Dashboard-->>User: Displays "Model Retrained Successfully" notification banner
-```
-
----
-
-### 5. Storage Tiering (Hot vs. Cold Lakehouse Architecture)
-
-```mermaid
-graph LR
-    subgraph INGEST["Live Streaming Ingestion"]
-        Kafka["Apache Kafka Broker"] --> Spark["PySpark Stream Processor"]
-    end
-
-    subgraph HOT["Hot Tier (Operational)"]
-        Spark --> Mongo[("MongoDB NoSQL<br/>- Raw JSON Documents<br/>- Sub-second UI query latency<br/>- Retains active stream window")]
-        Mongo --> UI["Flask Live Dashboard & SSE Stream"]
-    end
-
-    subgraph COLD["Cold Tier (Data Lakehouse)"]
-        Spark --> Parquet[("Apache Parquet Storage<br/>- Snappy Columnar compression<br/>- ~82% Storage Space Saved<br/>- Column pruning & predicate pushdown")]
-        Parquet --> Retrain["PySpark Batch Retraining & Historical OLAP Queries"]
-    end
-```
-
----
-
-### 6. Sliding-Window Volatility & Anomaly Radar Pipeline
-
-```mermaid
-flowchart TD
-    Stream["Continuous Tweet Stream"] --> Window["Sliding Time Window (e.g., 20 items / 60s)"]
-    Window --> Calc["Compute Sentiment Probabilities & Rolling Variance"]
-    Calc --> StdDev["Calculate Volatility Index & Moving Z-Score"]
-    StdDev --> Check{"Z-Score > Threshold?"}
-    Check -- Yes --> Anomaly["🚨 Sentiment Shock / Anomaly Detected<br/>Trigger Live UI Alert"]
-    Check -- No --> Normal["🟢 Normal Sentiment Flow"]
-
-    classDef s fill:#e0f2fe,stroke:#0284c7,stroke-width:2px,color:#0f172a;
-    classDef c fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#0f172a;
-    classDef a fill:#fee2e2,stroke:#dc2626,stroke-width:2px,color:#0f172a;
-    classDef n fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#0f172a;
-
-    class Stream,Window s;
-    class Calc,StdDev,Check c;
-    class Anomaly a;
-    class Normal n;
-```
-
----
-
-### 7. Historical Architecture Reference
-
-![End-to-End System Pipeline](project_diagrams/flow.png)
-*Figure 1: High-level architectural pipeline flow demonstrating live streaming from Twitter through Kafka brokers and Apache Spark MLlib classification into MongoDB persistence and the serving web tier.*
+* **Fig. 4**: Closed-loop active learning flow showing continuous human verification feedback, ground-truth persistence in MongoDB, automated batch retraining via `spark_retrainer.py`, and dynamic hot-reloading of the PySpark `PipelineModel` without service interruption.
 
 ---
 
@@ -222,7 +59,7 @@ flowchart TD
   - **Live Analytics (`/`)**: Real-time KPI summary counters, dynamic sentiment distribution charts (Pie and Bar plots via Chart.js), and searchable/filterable tweet tables.
   - **Tweet Scraper & Sentiment Studio (`/scrape`)**: Instant on-demand scraping by keyword or hashtag with immediate sentiment scoring and database persistence.
   - **Model Classifier Playground (`/classify`)**: Test custom text or sentences against the PySpark ML model in real time.
-- **Full Dockerization**: Instant deployment of ZooKeeper, Kafka, MongoDB, Flask Web UI, Kafka Producer, and PySpark Consumer using Docker Compose.
+- **Full Dockerization**: Instant deployment of Kafka, MongoDB, Flask Web UI, Kafka Producer, and PySpark Consumer using Docker Compose.
 
 ---
 
@@ -301,7 +138,7 @@ SECRET_KEY=sentiment-analysis-secret-key
 
 ## 🐳 Quickstart with Docker Compose (Recommended)
 
-To launch the complete infrastructure (Zookeeper, Kafka, MongoDB, Producer, Spark Consumer, and Web UI) in one command:
+To launch the complete infrastructure (Kafka, MongoDB, Producer, Spark Consumer, and Web UI) in one command:
 
 ```bash
 # Build and start all services in detached mode
@@ -388,14 +225,3 @@ Open your browser and navigate to:
 | `/api/clear-db` | `POST` | Clears operational MongoDB collection on demand |
 | `/api/health` | `GET` | Cluster connectivity and service health check probe |
 
----
-
-## 👥 Contributors & Acknowledgements
-
-- **Driss Khattabi** ([@drisskhattabi6](https://github.com/drisskhattabi6))
-- **Ayman Boufarhi** ([@aymanboufarhi](https://github.com/aymanboufarhi))
-- **Abdelali Ibn Tabet** ([@abd-ibn](https://github.com/abd-ibn))
-
-**Supervised By**: Prof. **Yasyn El Yusufi**  
-*Faculty of Sciences and Technology of Tangier — Abdelmalek Essaadi University*  
-*Master: Artificial Intelligence and Data Science (Module: Big Data)*
