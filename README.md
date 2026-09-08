@@ -15,7 +15,9 @@ A scalable, end-to-end Big Data pipeline designed for **real-time ingestion, dis
 
 ### 1. End-to-End System Architecture (IEEE Flowchart)
 
-![Fig. 1. End-to-End Distributed Architecture Flowchart](project_diagrams/architecture_diagram.png)
+<p align="center">
+  <img src="project_diagrams/architecture_diagram.png" width="460" alt="Fig. 1. End-to-End Distributed Architecture Flowchart" />
+</p>
 
 * **Fig. 1**: Sequential IEEE-standard processing flow showing data ingestion ($D_{stream}$), Kafka partitioned message broker, PySpark Structured Streaming consumer, MLlib multiclass classification, dual-tier persistence (MongoDB NoSQL + Parquet Lakehouse), and the Active Learning retraining feedback loop.
 
@@ -23,7 +25,9 @@ A scalable, end-to-end Big Data pipeline designed for **real-time ingestion, dis
 
 ### 2. PySpark MLlib NLP Feature Extraction & Inference Pipeline
 
-![Fig. 2. PySpark MLlib NLP Pipeline Architecture](project_diagrams/spark_nlp_pipeline.png)
+<p align="center">
+  <img src="project_diagrams/spark_nlp_pipeline.png" width="440" alt="Fig. 2. PySpark MLlib NLP Pipeline Architecture" />
+</p>
 
 * **Fig. 2**: Sequential IEEE-standard stage-by-stage feature transformation pipeline: $\text{Raw Tweet} \rightarrow \text{Regex Sanitizer} \rightarrow \text{RegexTokenizer} \rightarrow \text{StopWordsRemover} \rightarrow \text{HashingTF (10,000 features)} \rightarrow \text{IDF} \rightarrow \text{LogisticRegressionModel} \rightarrow \text{Sentiment Output} (\text{Positive}, \text{Negative}, \text{Neutral}, \text{Irrelevant})$.
 
@@ -31,7 +35,9 @@ A scalable, end-to-end Big Data pipeline designed for **real-time ingestion, dis
 
 ### 3. Big Data Storage Tiering: Hot Operational Store vs. Cold Data Lakehouse
 
-![Fig. 3. Dual Storage Tiering Architecture](project_diagrams/lakehouse_tiering.png)
+<p align="center">
+  <img src="project_diagrams/lakehouse_tiering.png" width="440" alt="Fig. 3. Dual Storage Tiering Architecture" />
+</p>
 
 * **Fig. 3**: Dual storage topology detailing separation of concerns between Hot Operational Sink (MongoDB NoSQL for sub-second UI telemetry) and Cold Analytical Lakehouse (Snappy Apache Parquet with ~82% disk footprint reduction and fast OLAP columnar scans).
 
@@ -39,7 +45,9 @@ A scalable, end-to-end Big Data pipeline designed for **real-time ingestion, dis
 
 ### 4. Human-in-the-Loop Active Learning & Automated Retraining Loop
 
-![Fig. 4. Closed-Loop Active Learning Flowchart](project_diagrams/active_learning_flow.png)
+<p align="center">
+  <img src="project_diagrams/active_learning_flow.png" width="440" alt="Fig. 4. Closed-Loop Active Learning Flowchart" />
+</p>
 
 * **Fig. 4**: Closed-loop active learning flow showing continuous human verification feedback, ground-truth persistence in MongoDB, automated batch retraining via `spark_retrainer.py`, and dynamic hot-reloading of the PySpark `PipelineModel` without service interruption.
 
