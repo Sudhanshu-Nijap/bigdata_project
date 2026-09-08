@@ -173,6 +173,8 @@ def fetch_tweets_and_stats(limit=500):
             tweets = [{
                 'tweet': item.get('tweet', ''),
                 'prediction': item.get('prediction', 'Neutral'),
+                'user': item.get('user', 'twitter_user'),
+                'date': item.get('date', 'Live'),
                 'is_verified': item.get('is_verified', False),
                 'verified_sentiment': item.get('verified_sentiment')
             } for item in raw]
@@ -191,12 +193,37 @@ def fetch_tweets_and_stats(limit=500):
 
 @app.route('/')
 def dashboard():
+    total, counts, rates, recent_tweets = fetch_tweets_and_stats()
+    if total == 0:
+        try:
+            scraped = scrape_tweets("#AI", count=15) + scrape_tweets("#Tech", count=10)
+            db_docs = []
+            for item in scraped:
+                txt = item.get('tweet', '').strip()
+                if txt:
+                    pred = classify_tweet_text(txt)
+                    db_docs.append({
+                        'tweet': txt,
+                        'prediction': pred,
+                        'user': item.get('user', 'twitter_user'),
+                        'date': item.get('date', 'Recently'),
+                        'is_verified': False,
+                        'timestamp': time.time()
+                    })
+            if db_docs:
+                _, collection = get_mongo_collection()
+                if collection is not None:
+                    collection.insert_many(db_docs)
+                total, counts, rates, recent_tweets = fetch_tweets_and_stats()
+        except Exception:
+            pass
+
     return render_template(
         'index.html',
-        len_data=0,
-        sentiment_counts={'Negative': 0, 'Positive': 0, 'Neutral': 0, 'Irrelevant': 0},
-        sentiment_rates={'Negative': 0, 'Positive': 0, 'Neutral': 0, 'Irrelevant': 0},
-        data=[]
+        len_data=total,
+        sentiment_counts=counts,
+        sentiment_rates=rates,
+        data=recent_tweets
     )
 
 @app.route('/api/stats')
