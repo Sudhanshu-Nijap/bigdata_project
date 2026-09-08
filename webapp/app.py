@@ -153,15 +153,15 @@ def classify_tweet_text(text: str) -> str:
         _ml_engine = PySparkMLEngine()
     return _ml_engine.predict(text)
 
-def publish_to_kafka(payloads):
-    """Publish tweet batch to Kafka broker."""
+def _kafka_worker(payloads):
     try:
         from kafka import KafkaProducer
         producer = KafkaProducer(
             bootstrap_servers=[s.strip() for s in KAFKA_SERVERS.split(",")],
             value_serializer=lambda v: json.dumps(v).encode("utf-8"),
             api_version=(2, 5, 0),
-            request_timeout_ms=1500
+            request_timeout_ms=1000,
+            max_block_ms=500
         )
         for p in payloads:
             producer.send(KAFKA_TOPIC, value=p)
@@ -169,6 +169,12 @@ def publish_to_kafka(payloads):
         producer.close()
     except Exception:
         pass
+
+def publish_to_kafka(payloads):
+    """Publish tweet batch to Kafka broker asynchronously without blocking the stream."""
+    import threading
+    t = threading.Thread(target=_kafka_worker, args=(payloads,), daemon=True)
+    t.start()
 
 def fetch_tweets_and_stats(limit=500):
     """Retrieve tweets from MongoDB and compute sentiment metrics."""
@@ -296,18 +302,22 @@ def api_stream_tweets():
                 prediction = classify_tweet_text(tweet_text)
                 publish_to_kafka([[str(idx), query, "Unlabeled", tweet_text]])
 
-                _, collection = get_mongo_collection()
-                if collection is not None:
-                    try:
-                        collection.insert_one({
-                            'tweet': tweet_text,
-                            'prediction': prediction,
-                            'query': query,
-                            'is_verified': False,
-                            'timestamp': time.time()
-                        })
-                    except Exception:
-                        pass
+                def _save_mongo(txt, pred, q):
+                    _, col = get_mongo_collection()
+                    if col is not None:
+                        try:
+                            col.insert_one({
+                                'tweet': txt,
+                                'prediction': pred,
+                                'query': q,
+                                'is_verified': False,
+                                'timestamp': time.time()
+                            })
+                        except Exception:
+                            pass
+
+                import threading
+                threading.Thread(target=_save_mongo, args=(tweet_text, prediction, query), daemon=True).start()
 
                 event_data = {
                     'index': idx,
