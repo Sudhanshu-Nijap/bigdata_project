@@ -1,16 +1,16 @@
 # Web Application & Serving
-Flask==3.0.3
-gunicorn==22.0.0
-python-dotenv==1.0.1
+Flask>=3.0.0
+gunicorn>=22.0.0
+python-dotenv>=1.0.0
 
 # Big Data & Distributed Streaming
-pyspark==3.5.1
+pyspark>=3.5.0
 kafka-python-ng>=2.2.0
 
 # Database & Storage
-pymongo[srv]==3.12.1
+pymongo>=4.6.0
 dnspython>=2.0.0
-pandas==2.2.2
+pandas>=2.2.0
 pyarrow>=14.0.0
 
 # Data Ingestion & Web Scraping
