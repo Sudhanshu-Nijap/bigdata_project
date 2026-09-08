@@ -98,26 +98,11 @@ NEGATIVE_LEXICON = {
 NEGATION_WORDS = {'not', 'no', 'never', 'none', 'neither', 'hardly', 'barely', 'scarcely', 'isnt', 'arent', 'wasnt', 'werent', 'dont', 'doesnt', 'didnt', 'wont'}
 
 def classify_tweet_text(text: str) -> str:
-    """Classify tweet using PySpark ML Pipeline or resilient NLP engine."""
+    """Classify tweet using high-speed NLP engine aligned with PySpark trained lexicon."""
     if not text or not text.strip():
         return "Neutral"
 
     raw = text.strip()
-    cleaned = re.sub(r"https?://\S+|www\.\S+|(@|#)\w+|[^a-zA-Z\s]", "", raw.lower())
-    cleaned = re.sub(r"\s+", " ", cleaned).strip()
-
-    # 1. Attempt PySpark Pipeline Model if active
-    try:
-        spark, pipeline = get_spark_and_model()
-        if spark and pipeline:
-            df = spark.createDataFrame([(cleaned,)], ["Text"])
-            predictions = pipeline.transform(df).collect()
-            if predictions and len(predictions[0]) > 6:
-                return SENTIMENT_MAP.get(int(predictions[0][6]), "Neutral")
-    except Exception:
-        pass
-
-    # 2. NLP Classification (Lexicon + Negations)
     words = re.findall(r'[a-zA-Z]+', raw.lower())
     if len(words) < 3 and ('http' in raw.lower() or '@' in raw):
         return 'Irrelevant'
