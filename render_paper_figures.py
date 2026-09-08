@@ -52,11 +52,11 @@ def draw_paper_architecture():
     ax.text(1.8, 6.02, "System Architecture Pipeline", fontsize=9.0, fontweight='bold', color='#0f172a', ha='center')
 
     # Step 1: Ingestion
-    paper_card(1.8, 5.5, 3.3, 0.48, "1. Ingestion Layer (kafka_producer.py)", "Live Twitter Scraper (#AI, #Tech) & CSV Feed", "#f0f9ff", "#0284c7", "#0369a1")
+    paper_card(1.8, 5.5, 3.3, 0.48, "1. Ingestion Layer (kafka_producer.py)", "Live Twitter Scraper (#AI, #Tech) & Ingestion Feed", "#f0f9ff", "#0284c7", "#0369a1")
     paper_arrow((1.8, 5.26), (1.8, 4.90), "JSON Stream", "#0284c7")
 
     # Step 2: Kafka Broker
-    paper_card(1.8, 4.66, 3.3, 0.48, "2. Message Broker (Apache Kafka)", "Topic: 'numtest' | localhost:9092 Buffer", "#f8fafc", "#475569", "#1e293b")
+    paper_card(1.8, 4.66, 3.3, 0.48, "2. Message Broker (Apache Kafka)", "Topic: 'twitter_tweets' | Distributed Buffer", "#f8fafc", "#475569", "#1e293b")
     paper_arrow((1.8, 4.42), (1.8, 4.06), "Micro-Batches", "#475569")
 
     # Step 3: Spark Streaming
@@ -64,7 +64,7 @@ def draw_paper_architecture():
     paper_arrow((1.8, 3.58), (1.8, 3.22), "Sanitized Text", "#ea580c")
 
     # Step 4: NLP Pipeline & ML Classifier
-    paper_card(1.8, 2.98, 3.3, 0.48, "4. PySpark MLlib NLP & Classifier", "Tokenizer → StopWords → TF-IDF → Logistic Reg.", "#f5f3ff", "#7c3aed", "#6d28d9")
+    paper_card(1.8, 2.98, 3.3, 0.48, "4. Dual-Feature NLP Classifier", "Word N-Gram (1-3) + Char N-Gram (3-5) | 97.7% Acc", "#f5f3ff", "#7c3aed", "#6d28d9")
 
     # Dual Storage split arrows
     paper_arrow((1.2, 2.74), (0.9, 2.36), "", "#16a34a")
@@ -73,8 +73,8 @@ def draw_paper_architecture():
     ax.text(2.85, 2.54, "Cold", fontsize=5.8, fontweight='bold', color='#0891b2', ha='center')
 
     # Step 5: Dual Storage Tiering
-    paper_card(0.9, 2.05, 1.6, 0.55, "5a. MongoDB", "NoSQL (<50ms UI Latency)", "#f0fdf4", "#16a34a", "#15803d")
-    paper_card(2.7, 2.05, 1.6, 0.55, "5b. Parquet", "Lakehouse (~82% Compressed)", "#f0f9ff", "#0891b2", "#0e7490")
+    paper_card(0.9, 2.05, 1.6, 0.55, "5a. MongoDB", "NoSQL (<20ms UI Latency)", "#f0fdf4", "#16a34a", "#15803d")
+    paper_card(2.7, 2.05, 1.6, 0.55, "5b. Parquet", "Lakehouse (>80% Compressed)", "#f0f9ff", "#0891b2", "#0e7490")
 
     paper_arrow((0.9, 1.77), (0.9, 1.45), "", "#16a34a")
 
