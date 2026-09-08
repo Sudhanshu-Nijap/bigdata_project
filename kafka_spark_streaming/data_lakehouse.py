@@ -12,6 +12,9 @@ import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
 from pymongo import MongoClient
+from dotenv import load_dotenv
+
+load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://localhost:27017/")
 MONGO_DB_NAME = os.getenv("MONGO_DB_NAME", "bigdata_project")
@@ -108,7 +111,7 @@ def compute_stream_volatility(window_seconds=60):
     is_anomaly = neg_ratio >= 60.0 and total >= 5
 
     return {
-        "status": "🚨 HIGH VOLATILITY CRITICAL" if is_anomaly else "🟢 STABLE FLOW",
+        "status": "HIGH VOLATILITY ALERT" if is_anomaly else "STABLE STREAM FLOW",
         "volatility_score": min(volatility, 100.0),
         "negative_ratio": neg_ratio,
         "positive_ratio": pos_ratio,

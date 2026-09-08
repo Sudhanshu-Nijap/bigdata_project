@@ -12,6 +12,9 @@ from pymongo import MongoClient
 from kafka import KafkaConsumer
 from pyspark.sql import SparkSession
 from pyspark.ml import PipelineModel
+from dotenv import load_dotenv
+
+load_dotenv()
 
 # Configuration
 KAFKA_SERVERS = os.getenv("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092")
